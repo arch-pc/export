@@ -21,8 +21,9 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
       background: #f5f7fa;
       color: #2d3748;
-      line-height: 1.6;
-      padding: 20px;
+      line-height: 1.5;
+      padding: 16px;
+      font-size: 14px;
     }
     
     .container {
@@ -31,17 +32,17 @@
     }
     
     h1 {
-      font-size: 28px;
-      margin-bottom: 24px;
+      font-size: 22px;
+      margin-bottom: 16px;
       color: #1a202c;
     }
     
     .upload-section {
       background: white;
-      padding: 24px;
-      border-radius: 8px;
+      padding: 16px;
+      border-radius: 6px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      margin-bottom: 24px;
+      margin-bottom: 16px;
     }
     
     .file-input-wrapper {
@@ -91,46 +92,46 @@
     
     .category-card {
       background: white;
-      padding: 24px;
-      border-radius: 8px;
+      padding: 16px;
+      border-radius: 6px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      margin-bottom: 24px;
+      margin-bottom: 16px;
       page-break-inside: avoid;
     }
     
     .category-title {
-      font-size: 24px;
+      font-size: 18px;
       font-weight: 600;
       color: #2d3748;
-      margin-bottom: 20px;
-      padding-bottom: 12px;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
       border-bottom: 2px solid #e2e8f0;
     }
     
     .variable-block {
-      margin-bottom: 32px;
-      padding: 20px;
+      margin-bottom: 20px;
+      padding: 12px;
       background: #f7fafc;
-      border-radius: 6px;
-      border-left: 4px solid #3182ce;
+      border-radius: 4px;
+      border-left: 3px solid #3182ce;
       page-break-inside: avoid;
     }
     
     .variable-header {
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
+      gap: 8px;
+      margin-bottom: 8px;
     }
     
     .variable-checkbox {
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
       cursor: pointer;
     }
     
     .variable-name {
-      font-size: 18px;
+      font-size: 15px;
       font-weight: 600;
       color: #1a202c;
       flex: 1;
@@ -138,9 +139,9 @@
     
     .variable-meta {
       display: flex;
-      gap: 12px;
-      margin-bottom: 16px;
-      font-size: 14px;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-size: 12px;
     }
     
     .tag {
@@ -160,29 +161,30 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 16px;
-      font-size: 14px;
+      margin-bottom: 12px;
+      font-size: 13px;
     }
     
     th {
       background: #edf2f7;
-      padding: 10px;
+      padding: 6px 8px;
       text-align: center;
       font-weight: 600;
       border-bottom: 2px solid #cbd5e0;
+      font-size: 12px;
     }
     
     td {
-      padding: 10px;
+      padding: 6px 8px;
       border-bottom: 1px solid #e2e8f0;
       text-align: center;
       vertical-align: top;
     }
     
     td small {
-      font-size: 11px;
+      font-size: 10px;
       display: block;
-      margin-top: 4px;
+      margin-top: 2px;
     }
     
     tr:hover {
@@ -205,9 +207,9 @@
     }
     
     .subvariable {
-      margin-left: 20px;
-      margin-top: 16px;
-      padding: 16px;
+      margin-left: 16px;
+      margin-top: 10px;
+      padding: 10px;
       background: white;
       border-radius: 4px;
       border: 1px solid #e2e8f0;
@@ -216,44 +218,46 @@
     .subvariable-header {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 12px;
+      gap: 6px;
+      margin-bottom: 8px;
     }
     
     .subvariable-name {
-      font-size: 15px;
+      font-size: 13px;
       font-weight: 500;
       color: #4a5568;
       flex: 1;
     }
     
     .notes {
-      margin-top: 16px;
-      padding: 12px;
+      margin-top: 10px;
+      padding: 8px 10px;
       background: #fffaf0;
-      border-left: 4px solid #ed8936;
+      border-left: 3px solid #ed8936;
       border-radius: 4px;
     }
     
     .notes-title {
       font-weight: 600;
       color: #c05621;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
+      font-size: 12px;
     }
     
     .notes-text {
       color: #744210;
-      font-size: 14px;
+      font-size: 12px;
+      line-height: 1.5;
     }
     
     .chart-container {
-      margin-top: 20px;
-      margin-bottom: 20px;
+      margin-top: 12px;
+      margin-bottom: 12px;
       background: white;
-      padding: 16px;
-      border-radius: 6px;
+      padding: 12px;
+      border-radius: 4px;
       position: relative;
-      height: 300px;
+      height: 250px;
     }
     
     #content {
@@ -532,6 +536,9 @@
           
           html += createTable(variable.data, weeks, unit);
           
+          // Chart for main variable
+          html += `<div class="chart-container"><canvas id="${chartId}"></canvas></div>`;
+          
           // Subvariables
           if (variable.subVariables && variable.subVariables.length > 0) {
             variable.subVariables.forEach((subVar, subIdx) => {
@@ -545,9 +552,6 @@
               html += `</div>`;
             });
           }
-          
-          // Chart
-          html += `<div class="chart-container"><canvas id="${chartId}"></canvas></div>`;
           
           // Notes
           if (notes) {
