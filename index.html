@@ -171,30 +171,54 @@
             align-items: flex-start;
         }
         
-        .data-table-compact {
+        .data-section {
+            flex: 0 0 auto;
+        }
+        
+        .data-table-horizontal {
             display: inline-block;
-            min-width: 200px;
+            margin-bottom: 10px;
         }
         
         table {
             border-collapse: collapse;
             background: white;
-            font-size: 12px;
+            font-size: 11px;
         }
         
-        th, td {
-            padding: 6px 10px;
-            text-align: left;
-            border-bottom: 1px solid #ecf0f1;
+        table.horizontal-layout {
+            display: table;
         }
         
-        th {
+        table.horizontal-layout th {
             background: #34495e;
             color: white;
             font-weight: 600;
             text-transform: uppercase;
-            font-size: 10px;
+            font-size: 9px;
             letter-spacing: 0.3px;
+            padding: 4px 8px;
+            text-align: center;
+            border-right: 1px solid #2c3e50;
+        }
+        
+        table.horizontal-layout th:last-child {
+            border-right: none;
+        }
+        
+        table.horizontal-layout td {
+            padding: 4px 8px;
+            text-align: center;
+            border-right: 1px solid #ecf0f1;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        table.horizontal-layout td:last-child {
+            border-right: none;
+        }
+        
+        table.horizontal-layout tr:last-child td {
+            border-bottom: none;
         }
         
         tr:hover {
@@ -376,22 +400,34 @@
             });
         }
         
-        // Render compact data table
+        // Render horizontal data table
         function renderTable(data, unit) {
             const weeks = sortWeeks(Object.keys(data));
             
-            let html = '<div class="data-table-compact"><table><thead><tr><th>Week</th><th>Waarde</th><th>Delta</th></tr></thead><tbody>';
+            let html = '<div class="data-table-horizontal"><table class="horizontal-layout">';
             
-            weeks.forEach((week, index) => {
-                const value = data[week];
-                const delta = calculateDelta(data, weeks, index);
-                
-                html += '<tr>';
-                html += `<td>${week}</td>`;
-                html += `<td>${value !== null ? value + unit : '<span class="null-value">–</span>'}</td>`;
-                html += `<td>${formatDelta(delta, unit)}</td>`;
-                html += '</tr>';
+            // Header row with week labels
+            html += '<thead><tr>';
+            weeks.forEach(week => {
+                html += `<th>${week}</th>`;
             });
+            html += '</tr></thead><tbody>';
+            
+            // Values row
+            html += '<tr>';
+            weeks.forEach(week => {
+                const value = data[week];
+                html += `<td>${value !== null ? value + unit : '<span class="null-value">–</span>'}</td>`;
+            });
+            html += '</tr>';
+            
+            // Delta row
+            html += '<tr>';
+            weeks.forEach((week, index) => {
+                const delta = calculateDelta(data, weeks, index);
+                html += `<td>${formatDelta(delta, unit)}</td>`;
+            });
+            html += '</tr>';
             
             html += '</tbody></table></div>';
             return html;
@@ -523,6 +559,7 @@
                         
                         // Horizontal layout: table + chart
                         html += `<div class="data-container">`;
+                        html += `<div class="data-section">`;
                         
                         // Main variable table
                         html += renderTable(variable.data, unit);
@@ -530,6 +567,7 @@
                         // Chart
                         const chartId = `chart-${varId}`;
                         html += `<div class="chart-container"><canvas id="${chartId}"></canvas></div>`;
+                        html += `</div>`; // Close data-section
                         
                         html += `</div>`; // Close data-container
                         
