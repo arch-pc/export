@@ -188,9 +188,7 @@
         }
 
         function addEventListeners() {
-             // Event listeners voor checkboxen om de grafiek te updaten
             document.querySelectorAll('.select-item').forEach(checkbox => {
-                // Verwijder eerst eventuele oude listeners om duplicatie te voorkomen
                 checkbox.removeEventListener('change', updateChart); 
                 checkbox.addEventListener('change', updateChart);
             });
@@ -311,7 +309,6 @@
                                     beginAtZero: true,
                                     title: {
                                         display: true,
-                                        // Probeer de eenheid te achterhalen voor de Y-as
                                         text: datasets[0].label.includes('(') ? datasets[0].label.match(/\((.*?)\)/)[1] : ''
                                     }
                                 }
@@ -344,11 +341,11 @@
             reader.readAsText(file);
         }
         
-        // --- Hulpfunctie voor vertraging (oplossing voor lege canvas) ---
+        // --- Hulpfunctie voor vertraging (oplossing voor canvas rendering) ---
         function delay(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
         }
-        // -----------------------------------------------------------------
+        // ---------------------------------------------------------------------
 
 
         // --- PDF FUNCTIES (Aangepast voor Interleaved Delta) ---
@@ -429,7 +426,7 @@
             return tableHtml;
         }
 
-        // --- EXPORT FUNCTIE (Aangepast met Async Delay) ---
+        // --- EXPORT FUNCTIE (Aangepast met Verbeterde Hiding) ---
         function exportToPdf() {
             document.getElementById('exportPdfBtn').disabled = true;
 
@@ -439,17 +436,25 @@
                 return;
             }
 
-            // VOEG ASYNCHRONE PAUZE TOE VOOR CANVAS RENDERING
+            // Gebruik de delay voor een stabiele canvas conversie
             delay(100).then(() => {
                 
                 const allWeekLabels = getWeekLabels(window.globalJsonData);
 
-                // Maak en voeg de tijdelijke container toe aan de DOM (voor stabiele conversie)
+                // Maak en voeg de tijdelijke container toe aan de DOM
                 const tempDiv = document.createElement('div');
                 tempDiv.id = 'pdf-content-temp';
-                tempDiv.style.position = 'absolute';
-                tempDiv.style.left = '-9999px'; 
-                tempDiv.style.width = '100%';
+                
+                // 🛑 CRUCIALE WIJZIGING VOOR html2canvas RENDERING 🛑
+                // Gebruik fixed/opacity/z-index in plaats van off-screen positionering
+                tempDiv.style.position = 'fixed';
+                tempDiv.style.top = '0';
+                tempDiv.style.left = '0';
+                tempDiv.style.width = '100vw'; 
+                tempDiv.style.height = '100vh';
+                tempDiv.style.opacity = '0'; // Maak het onzichtbaar
+                tempDiv.style.zIndex = '-1'; // Plaats het achter de normale inhoud
+                tempDiv.style.overflow = 'auto'; // Belangrijk voor scrollende inhoud
                 tempDiv.style.backgroundColor = '#ffffff'; 
                 document.body.appendChild(tempDiv); 
                 
@@ -509,10 +514,18 @@
                             const chartCanvas = variableCard.querySelector('canvas');
                             if (chartCanvas && chartCanvas.style.display !== 'none') {
                                 try {
-                                    const chartImage = chartCanvas.toDataURL('image/png', 1.0);
+                                    // De grafiek moet een actieve chart.js instantie zijn
+                                    const chartImage = allCharts[chartCanvas.id].toBase64Image(); 
                                     tempVariableCard.innerHTML += `<img src="${chartImage}" style="width: 100%; max-height: 250px; object-fit: contain; margin-top: 15px; border: 1px solid #ccc;">`;
                                 } catch(e) {
                                     console.error("Fout bij het converteren van canvas naar afbeelding:", e);
+                                    // Fallback: probeer de directe toDataURL, mocht de chart.js toBase64Image niet werken
+                                    try {
+                                        const chartImage = chartCanvas.toDataURL('image/png', 1.0);
+                                        tempVariableCard.innerHTML += `<img src="${chartImage}" style="width: 100%; max-height: 250px; object-fit: contain; margin-top: 15px; border: 1px solid #ccc;">`;
+                                    } catch (err) {
+                                         console.error("Zelfs de fallback toDataURL faalde:", err);
+                                    }
                                 }
                             }
                             
@@ -530,6 +543,7 @@
                     margin: 0.5, 
                     filename: 'Analyse_Export.pdf',
                     image: { type: 'jpeg', quality: 0.98 },
+                    // Belangrijk: scrollY: 0 is cruciaal voor vaste elementen
                     html2canvas: { scale: 2, logging: false, scrollY: 0, useCORS: true }, 
                     jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
                 };
@@ -538,7 +552,7 @@
                     document.getElementById('exportPdfBtn').disabled = false;
                     tempDiv.remove();
                 });
-            }); // Sluit de 'delay' promise
+            }); 
         }
         
         // --- INITIALISATIE ---
