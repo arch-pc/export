@@ -9,86 +9,44 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        /* CSS voor de webweergave */
-        body {
-            background-color: #f8f9fa;
-        }
-        .container-main {
-            padding: 30px;
-        }
-        .category-container {
-            border: 1px solid #dee2e6;
-            border-radius: 0.3rem;
-            margin-bottom: 20px;
-            padding: 15px;
-            background-color: #ffffff;
-        }
-        .variable-card {
-            margin-bottom: 15px;
-            padding: 15px;
-            border: 1px solid #e9ecef;
-            border-left: 5px solid #0d6efd;
-            border-radius: 0.25rem;
-            background-color: #f8f9fa;
-        }
-        .sub-variable-row {
-            font-size: 0.9em;
-            color: #495057;
-            padding-left: 20px;
-            border-top: 1px dotted #ced4da;
-        }
-        .notes {
-            margin-top: 10px;
-            padding: 10px;
-            background-color: #fff3cd;
-            color: #664d03;
-            border-radius: 0.25rem;
-            font-style: italic;
-            font-size: 0.9em;
-        }
-        .chart-container {
-            max-height: 350px;
-            margin-top: 20px;
-        }
-        /* CSS voor de PDF (Print media query) - Verberg besturingselementen */
+        /* Basisstijlen */
+        body { background-color: #f8f9fa; }
+        .container-main { padding: 30px; }
+        .category-container { border: 1px solid #dee2e6; border-radius: 0.3rem; margin-bottom: 20px; padding: 15px; background-color: #ffffff; }
+        .variable-card { margin-bottom: 15px; padding: 15px; border: 1px solid #e9ecef; border-left: 5px solid #0d6efd; border-radius: 0.25rem; background-color: #f8f9fa; }
+        .sub-variable-row { font-size: 0.9em; color: #495057; padding-left: 20px; border-top: 1px dotted #ced4da; }
+        .notes { margin-top: 10px; padding: 10px; background-color: #fff3cd; color: #664d03; border-radius: 0.25rem; font-style: italic; font-size: 0.9em; }
+        .chart-container { max-height: 350px; margin-top: 20px; }
+        
+        /* PDF Stijlen (Belangrijk voor lay-out) */
         @media print {
-            .no-print {
-                display: none !important;
-            }
-            .category-container {
-                page-break-inside: avoid;
-                margin-bottom: 15px;
-            }
+            .no-print { display: none !important; }
+            /* Zorgt ervoor dat kaarten intact blijven op een pagina */
+            .category-container, .variable-card { page-break-inside: avoid; margin-bottom: 15px; } 
         }
-        /* Nieuwe stijlen voor PDF-tabel (zorgt voor betere rendering) */
-        .pdf-data-table {
-            border-collapse: collapse;
-            width: 100%;
-            font-size: 0.8em;
-            margin-top: 10px;
-            border: 1px solid #ddd;
+        
+        /* PDF Tabelstijlen (Geoptimaliseerd voor liggend formaat met extra Delta-kolommen) */
+        .pdf-data-table { border-collapse: collapse; width: 100%; font-size: 0.75em; margin-top: 10px; border: 1px solid #ddd; table-layout: fixed; }
+        .pdf-data-table th, .pdf-data-table td { 
+            border: 1px solid #eee; 
+            padding: 4px 3px; /* Minder padding voor meer ruimte */
+            text-align: right; 
+            white-space: nowrap; /* Voorkomt het afbreken van data */
         }
-        .pdf-data-table th, .pdf-data-table td {
-            border: 1px solid #eee;
-            padding: 5px;
-            text-align: right;
+        .pdf-data-table th { background-color: #f1f1f1; font-weight: bold; text-align: center; }
+        .pdf-data-table .label-cell { text-align: left; width: 150px; } /* Vaste breedte voor label */
+        
+        /* Stijlen voor Delta kolommen */
+        .pdf-data-table .delta-header {
+            background-color: #e9f5ff;
+            color: #0d6efd;
+            font-weight: normal;
+            font-size: 0.9em;
         }
-        .pdf-data-table th {
-            background-color: #f1f1f1;
-            font-weight: bold;
-            text-align: center;
-        }
-        .pdf-data-table .label-cell {
-            text-align: left;
-            width: 30%;
-        }
-        .pdf-data-table .main-row .label-cell {
-            font-weight: bold;
-            background-color: #f8f8f8;
-        }
-        .pdf-data-table .sub-row .label-cell {
-            font-style: italic;
-            padding-left: 15px;
+        .pdf-data-table .delta-cell {
+            background-color: #f7fcff;
+            color: #495057;
+            font-size: 0.9em;
         }
     </style>
 </head>
@@ -122,28 +80,9 @@
 
     <script>
         const allCharts = {};
+        let globalJsonData = null; 
 
-        // Functie om de JSON te laden vanuit het geüploade bestand
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const jsonData = JSON.parse(e.target.result);
-                    generateContent(jsonData);
-                    document.getElementById('exportPdfBtn').disabled = false;
-                } catch (error) {
-                    console.error("Fout bij het parsen van de JSON:", error);
-                    document.getElementById('contentContainer').innerHTML = '<div class="alert alert-danger"><strong>Fout:</strong> Ongeldig JSON-formaat. Controleer uw bestand.</div>';
-                    document.getElementById('exportPdfBtn').disabled = true;
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        // --- HULPFUNCTIES (Data en rendering) ---
+        // --- HULPFUNCTIES ---
 
         function getWeekLabels(data) {
             const labels = new Set();
@@ -157,22 +96,43 @@
             }
             return Array.from(labels).sort();
         }
-
-        function getValidData(dataObject) {
-            return Object.values(dataObject).filter(value => value !== null);
+        
+        // Functie om de delta (verschil) te berekenen tussen opeenvolgende weken
+        function calculateDeltas(dataValues, weekLabels) {
+            const deltas = {};
+            for (let i = 1; i < weekLabels.length; i++) {
+                const currentWeek = weekLabels[i];
+                const previousWeek = weekLabels[i - 1];
+                const currentValue = dataValues[currentWeek];
+                const previousValue = dataValues[previousWeek];
+                
+                if (typeof currentValue === 'number' && typeof previousValue === 'number') {
+                    // Afronden op 1 decimaal voor netheid
+                    const delta = currentValue - previousValue;
+                    deltas[currentWeek] = Math.round(delta * 10) / 10;
+                } else {
+                    deltas[currentWeek] = null;
+                }
+            }
+            return deltas;
         }
 
+        // Webweergave: "n/a" vervangen door "-"
         function generateDataRows(dataObject, unit) {
             return `
                 <div class="row small">
                     ${Object.values(dataObject).map(value => {
                         if (value === null) {
-                            return `<div class="col text-muted">n/a</div>`;
+                            return `<div class="col text-muted">-</div>`; 
                         }
                         return `<div class="col">${value}${unit}</div>`;
                     }).join('')}
                 </div>
             `;
+        }
+
+        function getValidData(dataObject) {
+            return Object.values(dataObject).filter(value => value !== null);
         }
 
         function getSelectedDatasets(chartId) {
@@ -201,8 +161,8 @@
             });
             return datasets;
         }
-        
-        // --- HOOFD RENDERING FUNCTIES ---
+
+        // --- HOOFD RENDERING & INITIALISATIE (Ongewijzigd, behalve calls naar generateDataRows) ---
 
         function generateContent(data) {
             const container = document.getElementById('contentContainer');
@@ -307,10 +267,8 @@
                             maintainAspectRatio: false,
                             plugins: {
                                 legend: {
-                                    position: 'bottom', // Zet de legenda onderaan voor betere PDF-passendheid
-                                    labels: {
-                                        boxWidth: 20
-                                    }
+                                    position: 'bottom',
+                                    labels: { boxWidth: 20 }
                                 },
                             },
                             scales: {
@@ -330,24 +288,27 @@
             });
         }
         
-        function addEventListeners() {
-            document.querySelectorAll('.select-item').forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    const chartId = this.getAttribute('data-chart-id');
-                    const chart = allCharts[chartId];
-                    
-                    if (chart) {
-                        chart.data.datasets = getSelectedDatasets(chartId);
-                        chart.update();
-                    }
-                });
-            });
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
 
-            document.getElementById('jsonUpload').addEventListener('change', handleFileUpload);
-            document.getElementById('exportPdfBtn').addEventListener('click', exportToPdf);
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const jsonData = JSON.parse(e.target.result);
+                    window.globalJsonData = jsonData;
+                    generateContent(jsonData);
+                    document.getElementById('exportPdfBtn').disabled = false;
+                } catch (error) {
+                    console.error("Fout bij het parsen van de JSON:", error);
+                    document.getElementById('contentContainer').innerHTML = '<div class="alert alert-danger"><strong>Fout:</strong> Ongeldig JSON-formaat. Controleer uw bestand.</div>';
+                    document.getElementById('exportPdfBtn').disabled = true;
+                }
+            };
+            reader.readAsText(file);
         }
 
-        // --- PDF EXPORT FUNCTIE (geoptimaliseerd) ---
+        // --- PDF FUNCTIES (Geoptimaliseerd voor Delta's, Landscape en N/A) ---
 
         function createPdfTable(variableCard, isMainChecked, weekLabels) {
             const mainCheckbox = variableCard.querySelector('input[data-type="main"]');
@@ -356,32 +317,52 @@
             const mainLabelText = variableCard.querySelector('label.h5').textContent.replace(/\s\(.*?\)/, '');
             const unit = variableCard.getAttribute('data-data-unit');
 
-            // Maak de tabel-header (Week 1, Week 2, etc.)
+            // 1. Maak de Header (met weeklabels en Delta-kolommen)
             let tableHtml = `<table class="pdf-data-table"><thead><tr><th class="label-cell">Variabele</th>`;
-            weekLabels.forEach(label => {
+            
+            weekLabels.forEach((label, index) => {
                 tableHtml += `<th>${label}</th>`;
+                if (index < weekLabels.length - 1) {
+                    const nextWeekNum = index + 2;
+                    const currentWeekNum = index + 1;
+                    tableHtml += `<th class="delta-header">Δ (W${nextWeekNum}-W${currentWeekNum})</th>`;
+                }
             });
             tableHtml += `</tr></thead><tbody>`;
 
-            // Hulpmiddel om data rij te maken
+            // 2. Hulpmiddel om data rij te maken
             const createRow = (label, dataValues, isMain) => {
+                const deltas = calculateDeltas(dataValues, weekLabels); 
                 let rowHtml = `<tr class="${isMain ? 'main-row' : 'sub-row'}">`;
                 rowHtml += `<td class="label-cell">${label}</td>`;
-                weekLabels.forEach(week => {
+                
+                weekLabels.forEach((week, index) => {
                     const value = dataValues[week];
-                    rowHtml += `<td>${value === null ? 'n/a' : value + unit}</td>`;
+                    const delta = deltas[week];
+                    
+                    // 1. Weekly Value (null wordt nu '-')
+                    rowHtml += `<td>${value === null ? '-' : value + unit}</td>`;
+
+                    // 2. Delta Value
+                    if (index < weekLabels.length - 1) {
+                        if (delta === null) {
+                            rowHtml += `<td class="delta-cell">-</td>`;
+                        } else {
+                            const sign = delta > 0 ? '+' : '';
+                            rowHtml += `<td class="delta-cell">${sign}${delta}${unit}</td>`;
+                        }
+                    }
                 });
                 rowHtml += `</tr>`;
                 return rowHtml;
             };
 
-            // Hoofdwaarde toevoegen
+            // 3. Vul de rijen
             if (isMainChecked) {
                 const mainData = JSON.parse(variableCard.getAttribute('data-main-data-values'));
                 tableHtml += createRow(mainLabelText, mainData, true);
             }
 
-            // Subvariabelen toevoegen
             subCheckboxes.forEach(subCheckbox => {
                 if (subCheckbox.checked) {
                     const subRowElement = subCheckbox.closest('.sub-variable-row');
@@ -398,16 +379,36 @@
         function exportToPdf() {
             document.getElementById('exportPdfBtn').disabled = true;
 
-            const tempDiv = document.createElement('div');
-            tempDiv.style.padding = '0.5in'; 
-            
-            const allWeekLabels = getWeekLabels(JSON.parse(document.getElementById('jsonUpload').files[0].content)); // Haal labels opnieuw op
+            if (!window.globalJsonData) {
+                alert("Geen data geladen. Upload eerst een JSON-bestand.");
+                document.getElementById('exportPdfBtn').disabled = false;
+                return;
+            }
 
+            const allWeekLabels = getWeekLabels(window.globalJsonData);
+
+            // Maak en voeg de tijdelijke container toe aan de DOM
+            const tempDiv = document.createElement('div');
+            tempDiv.id = 'pdf-content-temp';
+            tempDiv.style.position = 'absolute';
+            tempDiv.style.left = '-9999px'; 
+            tempDiv.style.width = '100%';
+            document.body.appendChild(tempDiv); 
+            
+            // Hoofd wrapper met padding (deze wordt geëxporteerd)
+            tempDiv.innerHTML = `<div style="padding: 0.5in;"></div>`;
+            const contentWrapper = tempDiv.querySelector('div');
+            contentWrapper.innerHTML = `<h1 style="margin-bottom: 20px; color: #333;">Analyse Dashboard Export</h1>`;
+
+            // Bouw de gefilterde inhoud op
             document.querySelectorAll('.category-container').forEach(categoryContainer => {
                 const categoryName = categoryContainer.querySelector('h2').textContent;
                 const tempCategoryContainer = document.createElement('div');
                 tempCategoryContainer.style.marginBottom = '20px';
-                tempCategoryContainer.style.pageBreakInside = 'avoid'; // Zorgt voor betere paginering
+                tempCategoryContainer.style.pageBreakInside = 'avoid'; 
+                tempCategoryContainer.style.border = '1px solid #dee2e6';
+                tempCategoryContainer.style.padding = '15px';
+                tempCategoryContainer.style.backgroundColor = '#ffffff';
 
                 tempCategoryContainer.innerHTML = `<h3 style="color: #0d6efd; border-bottom: 2px solid #0d6efd; padding-bottom: 5px; margin-bottom: 15px;">${categoryName}</h3>`;
                 let hasVisibleVariable = false;
@@ -434,7 +435,7 @@
                         // 1. Titel
                         tempVariableCard.innerHTML = `<h5 style="color: #333; margin-bottom: 5px;">${mainLabel}</h5>`;
                         
-                        // 2. Data Tabel (Geoptimaliseerd voor PDF)
+                        // 2. Data Tabel (Nu inclusief Delta's)
                         tempVariableCard.innerHTML += createPdfTable(variableCard, isMainChecked, allWeekLabels);
 
                         // 3. Notities
@@ -447,11 +448,10 @@
                         const chartCanvas = variableCard.querySelector('canvas');
                         if (chartCanvas && chartCanvas.style.display !== 'none') {
                             try {
-                                const chartImage = chartCanvas.toDataURL('image/png');
+                                const chartImage = chartCanvas.toDataURL('image/png', 1.0);
                                 tempVariableCard.innerHTML += `<img src="${chartImage}" style="width: 100%; max-height: 250px; object-fit: contain; margin-top: 15px; border: 1px solid #ccc;">`;
                             } catch(e) {
                                 console.error("Fout bij het converteren van canvas naar afbeelding:", e);
-                                tempVariableCard.innerHTML += `<p style="color: red; margin-top: 15px;">Fout bij het laden van de grafiek in de PDF.</p>`;
                             }
                         }
                         
@@ -460,41 +460,30 @@
                 });
 
                 if (hasVisibleVariable) {
-                    tempDiv.appendChild(tempCategoryContainer);
+                    contentWrapper.appendChild(tempCategoryContainer);
                 }
             });
 
-            // Start de PDF-generatie (Liggende oriëntatie)
+            // Start de PDF-generatie (A4 Landscape)
             const opt = {
                 margin: 0.5, 
                 filename: 'Analyse_Export.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, logging: false, scrollY: 0, useCORS: true }, // useCORS: true kan helpen bij canvas export
-                jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' } 
+                html2canvas: { scale: 2, logging: false, scrollY: 0, useCORS: true }, 
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' } 
             };
 
-            html2pdf().from(tempDiv).set(opt).save(() => {
+            html2pdf().from(tempDiv).set(opt).save('Analyse_Export.pdf', () => {
                 document.getElementById('exportPdfBtn').disabled = false;
+                tempDiv.remove();
             });
         }
         
         // --- INITIALISATIE ---
-        document.addEventListener('DOMContentLoaded', addEventListeners);
-        
-        // HACK om de fileReader data beschikbaar te maken voor getWeekLabels in exportToPdf
-        // Dit is nodig omdat de data anders niet meer beschikbaar is
-        document.getElementById('jsonUpload').addEventListener('change', function() {
-            const file = this.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    file.content = e.target.result; // Voeg de inhoud toe aan het bestandsobject
-                    handleFileUpload({ target: { files: [file] } });
-                };
-                reader.readAsText(file);
-            }
+        document.addEventListener('DOMContentLoaded', () => {
+             document.getElementById('jsonUpload').addEventListener('change', handleFileUpload);
+             document.getElementById('exportPdfBtn').addEventListener('click', exportToPdf);
         });
-        
     </script>
 </body>
 </html>
