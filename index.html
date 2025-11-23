@@ -14,399 +14,327 @@
     <style>
         /* --- Root Variables --- */
         :root {
-            --bg-color: #f4f7f6;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --bg-color: #f8f9fa;
             --card-bg: #ffffff;
-            --border-color: #e0e0e0;
+            --border-color: #dee2e6;
             --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            --primary-color: #007bff;
-            --text-color: #333;
-            --text-light: #666;
-            --delta-positive: #28a745;
-            --delta-negative: #dc3545;
-            --note-bg: #fffbef;
-            --note-border: #ffeeba;
+            --text-color: #212529;
+            --text-muted: #6c757d;
+            --color-blue: #007bff;
+            --color-green: #28a745;
+            --color-red: #dc3545;
+            --color-yellow: #fff3cd;
+            --color-yellow-border: #ffeeba;
         }
 
-        /* --- Base & Layout --- */
+        /* --- Base Styles --- */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-                "Helvetica Neue", Arial, sans-serif;
+            font-family: var(--font-family);
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
-            padding: 0;
+            padding: 20px;
             line-height: 1.6;
         }
 
-        main {
-            max-width: 1400px;
-            margin: 20px auto;
-            padding: 20px;
+        h1, h2, h3, h4 {
+            margin-top: 0;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
         }
 
-        /* --- Header & Controls --- */
-        header {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 30px;
+        h1 { font-size: 2rem; text-align: center; margin-bottom: 1.5rem; }
+        h2 { font-size: 1.75rem; color: var(--color-blue); border-bottom: 2px solid var(--border-color); padding-bottom: 10px; }
+        h3 { font-size: 1.4rem; }
+        h4 { font-size: 1.1rem; color: var(--text-muted); font-weight: 500;}
+
+        /* --- Layout & Controls --- */
+        .controls {
+            max-width: 1200px;
+            margin: 0 auto 20px auto;
             padding: 20px;
             background: var(--card-bg);
             border-radius: 8px;
             box-shadow: var(--shadow);
-        }
-
-        header h1 {
-            margin: 0;
-            font-size: 1.8em;
-            color: var(--primary-color);
-        }
-
-        .controls {
             display: flex;
             flex-wrap: wrap;
+            gap: 15px;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .controls-group {
+            display: flex;
             gap: 10px;
             align-items: center;
         }
 
-        button,
-        input[type="file"]::file-selector-button {
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
-            background: var(--primary-color);
-            color: white;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: background-color 0.2s ease;
-        }
-
-        button:hover,
-        input[type="file"]::file-selector-button:hover {
-            background-color: #0056b3;
-        }
-
-        button.secondary {
-            background-color: #6c757d;
-        }
-        button.secondary:hover {
-            background-color: #5a6268;
-        }
-
         input[type="file"] {
-            font-size: 14px;
+            font-family: var(--font-family);
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
         }
+
+        button {
+            font-family: var(--font-family);
+            font-size: 1rem;
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        #export-pdf {
+            background-color: var(--color-blue);
+            color: white;
+        }
+        #export-pdf:hover { background-color: #0056b3; }
+        #export-pdf:disabled { background-color: #aaa; cursor: not-allowed; }
+
+        #select-all { background-color: #6c757d; color: white; }
+        #select-all:hover { background-color: #5a6268; }
+
+        #deselect-all { background-color: #e9ecef; color: var(--text-color); }
+        #deselect-all:hover { background-color: #d6dde3; }
 
         #error-message {
-            color: var(--delta-negative);
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            padding: 10px 15px;
-            border-radius: 5px;
             display: none;
             width: 100%;
+            padding: 15px;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            border-radius: 4px;
             margin-top: 10px;
-            box-sizing: border-box;
-        }
-        
-        #pdf-status {
-            display: none;
-            font-weight: 500;
-            color: var(--primary-color);
         }
 
-        /* --- Dashboard Content --- */
-        #dashboard-content {
-            display: grid;
-            gap: 30px;
+        #dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
+        /* --- Containers --- */
         .category-container {
             background: var(--card-bg);
             border-radius: 8px;
             box-shadow: var(--shadow);
-            padding: 25px 30px;
-            /* Hint for PDF generator to avoid breaking inside */
-            page-break-inside: avoid;
-        }
-
-        .category-title {
-            font-size: 2em;
-            font-weight: bold;
-            color: var(--text-color);
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 15px;
-            margin-top: 0;
+            padding: 25px;
             margin-bottom: 25px;
-            letter-spacing: 0.5px;
+            page-break-inside: avoid;
         }
 
         .variable-container {
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            margin-bottom: 25px;
-            overflow: hidden;
+            padding: 20px;
+            margin-top: 20px;
             page-break-inside: avoid;
-            transition: opacity 0.3s ease;
         }
 
         .variable-header {
             display: flex;
+            flex-wrap: wrap;
             justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            background: #fdfdfd;
-            padding: 15px 20px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .variable-header-left {
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
+            align-items: flex-start;
             gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .variable-header-main {
+            flex-grow: 1;
         }
 
-        .variable-name {
-            font-size: 1.5em;
-            font-weight: 600;
-            margin: 0;
+        .pdf-toggle-container {
+            flex-shrink: 0;
+            white-space: nowrap;
+            font-size: 0.9rem;
+            color: var(--text-muted);
         }
-
-        .variable-tags {
+        
+        .pdf-toggle-container label {
+            cursor: pointer;
             display: flex;
-            gap: 6px;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 5px;
         }
 
         .tag {
-            font-size: 0.75em;
-            font-weight: 500;
-            background: #e0e0e0;
-            color: var(--text-light);
+            font-size: 0.8rem;
             padding: 3px 8px;
-            border-radius: 10px;
-            text-transform: uppercase;
+            border-radius: 12px;
+            background-color: #e9ecef;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* --- Sub-variable --- */
+        .sub-variable-container {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fdfdfd;
+            border: 1px solid #f1f1f1;
+            border-radius: 6px;
         }
         
-        .pdf-toggle {
+        .sub-variable-header {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 6px;
-            font-size: 0.9em;
-            color: var(--text-light);
-            cursor: pointer;
-        }
-        
-        .pdf-toggle label {
-            cursor: pointer;
-            user-select: none;
-        }
-        
-        .pdf-toggle input[type="checkbox"] {
-            cursor: pointer;
+            gap: 10px;
         }
 
         /* --- Data Table --- */
         .data-table {
             width: 100%;
             border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.95rem;
         }
 
         .data-table th,
         .data-table td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid var(--border-color);
-            vertical-align: middle;
-            font-size: 0.95em;
-        }
-        
-        .data-table th:first-child,
-        .data-table td:first-child {
-            padding-left: 20px;
-            width: 30%; /* Give more space to metric names */
-        }
-        
-        .data-table th:not(:first-child),
-        .data-table td:not(:first-child) {
+            border: 1px solid var(--border-color);
+            padding: 10px;
             text-align: right;
-            padding-right: 20px;
         }
 
         .data-table th {
-            background: #fcfcfc;
+            background-color: #f8f9fa;
             font-weight: 600;
-            color: var(--text-light);
-            font-size: 0.9em;
         }
 
-        .data-table tr:last-child td {
-            border-bottom: none;
-        }
-        
-        .main-variable-row td {
-            font-weight: 600;
-            font-size: 1.05em;
-        }
-        
-        .sub-variable-row {
-            background-color: #fdfdfd;
-            transition: opacity 0.3s ease;
-        }
-        .sub-variable-row td:first-child {
-            padding-left: 30px; /* Indent sub-variables */
-        }
-
-        .delta {
-            font-size: 0.9em;
-            margin-left: 8px;
+        .data-table td:first-child,
+        .data-table th:first-child {
+            text-align: left;
             font-weight: 500;
         }
 
-        .delta-pos {
-            color: var(--delta-positive);
+        .null-value {
+            color: var(--text-muted);
         }
 
-        .delta-neg {
-            color: var(--delta-negative);
+        .delta-increase {
+            color: var(--color-green);
+            font-weight: 500;
         }
 
-        .no-data {
-            color: var(--text-light);
-            font-style: italic;
+        .delta-decrease {
+            color: var(--color-red);
+            font-weight: 500;
         }
 
-        /* --- Chart & Notes --- */
+        /* --- Notes & Chart --- */
+        .notes {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: var(--color-yellow);
+            border: 1px solid var(--color-yellow-border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+        
+        .notes h4 {
+            font-size: 1.1rem;
+            color: var(--text-color);
+            margin-bottom: 5px;
+        }
+
         .chart-container {
-            padding: 20px;
-            border-top: 1px solid var(--border-color);
-            background: #fcfcfc;
-        }
-        
-        .chart-container canvas {
-            max-height: 300px;
-        }
-
-        .notes-container {
-            background: var(--note-bg);
-            border-top: 1px solid var(--note-border);
-            padding: 15px 20px;
-        }
-
-        .notes-title {
-            font-weight: bold;
-            margin: 0 0 5px 0;
-            color: #856404;
-        }
-        
-        .notes-content {
-            margin: 0;
-            font-size: 0.95em;
-        }
-
-        /* --- PDF Generation Styling --- */
-        
-        /* This class is added to the body during PDF export */
-        body.prep-for-pdf {
-            background-color: var(--card-bg);
-        }
-
-        body.prep-for-pdf main {
-            max-width: none;
-            margin: 0;
+            margin-top: 20px;
             padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
         }
-        
-        body.prep-for-pdf header,
-        body.prep-for-pdf .pdf-toggle {
-            /* Hide all controls and checkboxes */
+
+        /* --- PDF Export Styles --- */
+        .pdf-hide {
             display: none !important;
         }
         
-        body.prep-for-pdf #dashboard-content {
-            /* Use block flow for continuous page */
-            display: block;
-            gap: 0;
+        /* Loading overlay for PDF generation */
+        #loader-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 9998;
+            justify-content: center;
+            align-items: center;
         }
         
-        body.prep-for-pdf .category-container,
-        body.prep-for-pdf .variable-container {
-            box-shadow: none;
-            border: 1px solid #ccc;
-        }
-        
-        body.prep-for-pdf .category-container {
+        #loader-overlay::after {
+            content: 'Generating PDF... Please wait.';
+            font-size: 1.2rem;
+            font-weight: 500;
             padding: 20px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
         }
-        
-        body.prep-for-pdf .chart-container canvas {
-            max-height: 400px; /* Allow more height for PDF */
-        }
-        
-        /* This class is toggled by JS to hide elements from PDF */
-        .pdf-hidden {
-            display: none !important;
-            opacity: 0.3; /* For screen view */
-        }
-        
-        /* On screen, fade out hidden items instead of removing them */
-        .variable-container.pdf-hidden,
-        .sub-variable-row.pdf-hidden {
-            display: block !important; /* Keep it in the layout */
-            opacity: 0.3;
-        }
-        
-        /* But when prepping for PDF, *really* hide them */
-        body.prep-for-pdf .variable-container.pdf-hidden,
-        body.prep-for-pdf .sub-variable-row.pdf-hidden {
-            display: none !important;
-        }
-        
+
     </style>
 </head>
 <body>
-    <main>
-        <header>
-            <h1>Metrics Dashboard</h1>
-            <div class="controls">
-                <input type="file" id="json-upload" accept="application/json">
-                <button id="select-all">Select All</button>
-                <button id="deselect-all" class="secondary">Deselect All</button>
-                <button id="export-pdf">Export to PDF</button>
-                <div id="pdf-status">Generating PDF...</div>
-            </div>
-            <div id="error-message"></div>
-        </header>
 
-        <div id="dashboard-content">
-            </div>
+    <header class="controls">
+        <div class="controls-group">
+            <label for="json-upload"><strong>Upload JSON Report:</strong></label>
+            <input type="file" id="json-upload" accept="application/json">
+        </div>
+        <div class="controls-group">
+            <button id="select-all" disabled>Select All</button>
+            <button id="deselect-all" disabled>Deselect All</button>
+            <button id="export-pdf" disabled>Export to PDF</button>
+        </div>
+        <div id="error-message"></div>
+    </header>
+
+    <main id="dashboard-container">
+        <p style="text-align: center; color: var(--text-muted);">Please upload a JSON file to see the dashboard.</p>
     </main>
+    
+    <div id="loader-overlay"></div>
 
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            // --- DOM Elements ---
-            const uploadInput = document.getElementById("json-upload");
-            const exportButton = document.getElementById("export-pdf");
-            const selectAllButton = document.getElementById("select-all");
-            const deselectAllButton = document.getElementById("deselect-all");
-            const contentDiv = document.getElementById("dashboard-content");
-            const errorDiv = document.getElementById("error-message");
-            const statusDiv = document.getElementById("pdf-status");
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Global variables ---
+            // Get libraries from CDN
+            const { jsPDF } = window.jspdf;
+            const { html2canvas } = window;
+            const { Chart } = window;
             
-            // To store Chart.js instances for later destruction
+            // To store Chart instances for later destruction
             let chartInstances = {};
-            // To store all week labels in order
-            let globalWeekLabels = [];
+
+            // --- Element Selectors ---
+            const jsonUpload = document.getElementById('json-upload');
+            const exportPdfBtn = document.getElementById('export-pdf');
+            const selectAllBtn = document.getElementById('select-all');
+            const deselectAllBtn = document.getElementById('deselect-all');
+            const dashboardContainer = document.getElementById('dashboard-container');
+            const errorMessage = document.getElementById('error-message');
+            const loaderOverlay = document.getElementById('loader-overlay');
 
             // --- Event Listeners ---
-            uploadInput.addEventListener("change", handleFileUpload);
-            exportButton.addEventListener("click", generatePDF);
-            selectAllButton.addEventListener("click", () => toggleAllCheckboxes(true));
-            deselectAllButton.addEventListener("click", () => toggleAllCheckboxes(false));
+            jsonUpload.addEventListener('change', handleFileUpload);
+            exportPdfBtn.addEventListener('click', generatePdf);
+            
+            selectAllBtn.addEventListener('click', () => toggleAllCheckboxes(true));
+            deselectAllBtn.addEventListener('click', () => toggleAllCheckboxes(false));
 
             /**
              * Handles the file upload event.
@@ -416,433 +344,414 @@
                 if (!file) return;
 
                 const reader = new FileReader();
+
                 reader.onload = (e) => {
                     try {
-                        const data = JSON.parse(e.target.result);
-                        renderDashboard(data);
-                        errorDiv.style.display = "none";
+                        const jsonData = JSON.parse(e.target.result);
+                        clearError();
+                        renderDashboard(jsonData);
+                        // Enable buttons
+                        exportPdfBtn.disabled = false;
+                        selectAllBtn.disabled = false;
+                        deselectAllBtn.disabled = false;
                     } catch (err) {
-                        showError(`Error parsing JSON file: ${err.message}`);
+                        showError(`Invalid JSON file: ${err.message}`);
+                        disableButtons();
                     }
                 };
-                reader.onerror = () => {
-                    showError("Error reading the file.");
-                };
-                reader.readAsText(file);
-            }
-            
-            /**
-             * Displays an error message.
-             */
-            function showError(message) {
-                errorDiv.textContent = message;
-                errorDiv.style.display = "block";
-                contentDiv.innerHTML = "";
-                destroyAllCharts();
-            }
 
-            /**
-             * Destroys all active Chart.js instances.
-             */
-            function destroyAllCharts() {
-                Object.values(chartInstances).forEach((chart) => chart.destroy());
-                chartInstances = {};
+                reader.onerror = () => {
+                    showError('Error reading the file.');
+                    disableButtons();
+                };
+
+                reader.readAsText(file);
             }
 
             /**
              * Renders the entire dashboard from the parsed JSON data.
              */
             function renderDashboard(data) {
-                contentDiv.innerHTML = "";
-                destroyAllCharts();
-                
-                // First, find all unique week labels from the *entire* dataset
-                globalWeekLabels = getWeekLabels(data);
+                // Clear previous content and destroy old charts
+                dashboardContainer.innerHTML = '';
+                Object.values(chartInstances).forEach(chart => chart.destroy());
+                chartInstances = {};
 
+                // Loop through main categories (ACQUISITION, BEHAVIOR, etc.)
                 for (const categoryName in data) {
-                    const category = data[categoryName];
-                    const categoryEl = document.createElement("div");
-                    categoryEl.className = "category-container";
-                    
-                    const titleEl = document.createElement("h2");
-                    titleEl.className = "category-title";
-                    titleEl.textContent = categoryName;
-                    categoryEl.appendChild(titleEl);
+                    if (Object.hasOwnProperty.call(data, categoryName)) {
+                        const categoryData = data[categoryName];
+                        
+                        // Create category container
+                        const categoryEl = document.createElement('div');
+                        categoryEl.className = 'category-container';
+                        
+                        const categoryTitle = document.createElement('h2');
+                        categoryTitle.textContent = categoryName;
+                        categoryEl.appendChild(categoryTitle);
 
-                    category.variables.forEach((variable) => {
-                        categoryEl.appendChild(renderVariable(variable));
-                    });
-
-                    contentDiv.appendChild(categoryEl);
-                }
-            }
-            
-            /**
-             * Extracts and sorts all unique week labels from the data.
-             */
-            function getWeekLabels(data) {
-                const weekSet = new Set();
-                try {
-                    Object.values(data).forEach(category => {
-                        category.variables.forEach(variable => {
-                            if (variable.data) {
-                                Object.keys(variable.data).forEach(week => weekSet.add(week));
-                            }
-                            variable.subVariables.forEach(sub => {
-                                if (sub.data) {
-                                    Object.keys(sub.data).forEach(week => weekSet.add(week));
-                                }
-                            });
+                        // Loop through variables within the category
+                        categoryData.variables.forEach((variable, index) => {
+                            const uniqueId = `${categoryName}-${index}`;
+                            const variableEl = createVariableElement(variable, uniqueId);
+                            categoryEl.appendChild(variableEl);
                         });
-                    });
-                } catch(e) {
-                    console.error("Could not parse week labels.", e);
-                    showError("Data structure error: Could not find week labels.");
+
+                        dashboardContainer.appendChild(categoryEl);
+                    }
                 }
-                
-                // Sort by the number in "Week X"
-                return Array.from(weekSet).sort((a, b) => {
-                    const numA = parseInt(a.split(" ")[1] || 0);
-                    const numB = parseInt(b.split(" ")[1] || 0);
-                    return numA - numB;
-                });
             }
 
             /**
-             * Renders a single variable container (header, table, chart, notes).
+             * Creates a complete HTML element for a single variable (including sub-vars, notes, chart).
              */
-            function renderVariable(variable) {
-                const variableEl = document.createElement("div");
-                variableEl.className = "variable-container";
+            function createVariableElement(variable, uniqueId) {
+                const variableEl = document.createElement('div');
+                variableEl.className = 'variable-container';
+                variableEl.id = uniqueId;
                 
-                const headerEl = document.createElement("div");
-                headerEl.className = "variable-header";
-
-                const headerLeft = document.createElement("div");
-                headerLeft.className = "variable-header-left";
+                // 1. Variable Header (Name, Tags, Checkbox)
+                const headerEl = document.createElement('div');
+                headerEl.className = 'variable-header';
                 
-                const nameEl = document.createElement("h3");
-                nameEl.className = "variable-name";
-                nameEl.textContent = variable.name.trim();
-                headerLeft.appendChild(nameEl);
+                const headerMain = document.createElement('div');
+                headerMain.className = 'variable-header-main';
+                
+                const nameEl = document.createElement('h3');
+                nameEl.textContent = variable.name.trim(); // Trim whitespace
+                headerMain.appendChild(nameEl);
                 
                 if (variable.tags && variable.tags.length > 0) {
-                    const tagsEl = document.createElement("div");
-                    tagsEl.className = "variable-tags";
-                    tagsEl.innerHTML = variable.tags.map(tag => `<span class="tag">${tag}</span>`).join("");
-                    headerLeft.appendChild(tagsEl);
+                    const tagsEl = document.createElement('div');
+                    tagsEl.className = 'tags';
+                    tagsEl.innerHTML = variable.tags.map(tag => `<span class="tag">${tag}</span>`).join('');
+                    headerMain.appendChild(tagsEl);
                 }
                 
-                headerEl.appendChild(headerLeft);
+                headerEl.appendChild(headerMain);
                 
-                // Add "Include in PDF" checkbox for the whole variable block
-                const checkboxId = `check-var-${Math.random().toString(36).substring(2, 9)}`;
-                const toggleEl = document.createElement("div");
-                toggleEl.className = "pdf-toggle";
-                toggleEl.innerHTML = `
-                    <input type="checkbox" id="${checkboxId}" class="pdf-select-main" checked>
-                    <label for="${checkboxId}">Include in PDF</label>
+                const checkboxEl = document.createElement('div');
+                checkboxEl.className = 'pdf-toggle-container';
+                checkboxEl.innerHTML = `
+                    <label>
+                        <input type="checkbox" class="pdf-toggle-main" data-target-id="${uniqueId}" checked>
+                        Include in PDF
+                    </label>
                 `;
-                
-                toggleEl.querySelector("input").addEventListener("change", (e) => {
-                    // On screen, toggle opacity. In PDF, this class will hide it.
-                    variableEl.classList.toggle("pdf-hidden", !e.target.checked);
-                });
-                
-                headerEl.appendChild(toggleEl);
+                headerEl.appendChild(checkboxEl);
                 variableEl.appendChild(headerEl);
-                
-                // --- Create Data Table ---
-                const tableEl = document.createElement("table");
-                tableEl.className = "data-table";
-                
-                const thead = document.createElement("thead");
-                thead.innerHTML = `
-                    <tr>
-                        <th>Metric</th>
-                        ${globalWeekLabels.map(week => `<th>${week}</th>`).join("")}
-                    </tr>
-                `;
-                tableEl.appendChild(thead);
-                
-                const tbody = document.createElement("tbody");
-                
-                // Render Main Variable Row
-                tbody.appendChild(renderDataRow(variable, "main", variable.unit));
-                
-                // Render Sub-Variable Rows
+
+                // 2. Main Variable Data Table
+                const tableEl = document.createElement('div');
+                tableEl.className = 'pdf-main-table'; // Class for PDF toggling
+                tableEl.innerHTML = createDataTable(variable.data, variable.unit);
+                variableEl.appendChild(tableEl);
+
+                // 3. Sub-Variables
                 if (variable.subVariables && variable.subVariables.length > 0) {
-                    variable.subVariables.forEach(subVar => {
-                         tbody.appendChild(renderDataRow(subVar, "sub", variable.unit));
+                    variable.subVariables.forEach((subVar, subIndex) => {
+                        const subVarId = `${uniqueId}-sub-${subIndex}`;
+                        const subVarEl = document.createElement('div');
+                        subVarEl.className = 'sub-variable-container';
+                        subVarEl.id = subVarId;
+                        
+                        // Sub-var header
+                        const subHeader = document.createElement('div');
+                        subHeader.className = 'sub-variable-header';
+                        subHeader.innerHTML = `
+                            <h4>${subVar.name.trim()}</h4>
+                            <div class="pdf-toggle-container">
+                                <label>
+                                    <input type="checkbox" class="pdf-toggle-sub" data-target-id="${subVarId}" checked>
+                                    Include
+                                </label>
+                            </div>
+                        `;
+                        subVarEl.appendChild(subHeader);
+                        
+                        // Sub-var table
+                        subVarEl.innerHTML += createDataTable(subVar.data, ""); // Assume no unit for sub-vars
+                        
+                        variableEl.appendChild(subVarEl);
                     });
                 }
-                
-                tableEl.appendChild(tbody);
-                variableEl.appendChild(tableEl);
-                
-                // --- Create Chart ---
-                const chartContainer = document.createElement("div");
-                chartContainer.className = "chart-container";
-                const canvas = document.createElement("canvas");
-                const canvasId = `chart-${Math.random().toString(36).substring(2, 9)}`;
-                canvas.id = canvasId;
-                chartContainer.appendChild(canvas);
-                variableEl.appendChild(chartContainer);
-                
-                // Render the chart
-                renderChart(canvasId, variable);
-                
-                // --- Create Notes ---
-                if (variable.notes && variable.notes.trim() !== "") {
-                    const notesEl = document.createElement("div");
-                    notesEl.className = "notes-container";
+
+                // 4. Notes
+                if (variable.notes && variable.notes.trim() !== '') {
+                    const notesEl = document.createElement('div');
+                    notesEl.className = 'notes pdf-notes'; // Class for PDF toggling
                     notesEl.innerHTML = `
-                        <h4 class="notes-title">Remarks</h4>
-                        <p class="notes-content">${variable.notes}</p>
+                        <h4>Notes</h4>
+                        <p>${variable.notes.trim()}</p>
                     `;
                     variableEl.appendChild(notesEl);
                 }
 
+                // 5. Chart
+                const chartContainer = document.createElement('div');
+                chartContainer.className = 'chart-container pdf-chart'; // Class for PDF toggling
+                
+                const canvas = document.createElement('canvas');
+                const chartId = `chart-${uniqueId}`;
+                canvas.id = chartId;
+                chartContainer.appendChild(canvas);
+                variableEl.appendChild(chartContainer);
+
+                // Render the chart
+                renderChart(canvas, variable);
+
                 return variableEl;
             }
-            
-            /**
-             * Renders a single <tr> for a metric (main or sub).
-             */
-            function renderDataRow(item, type, parentUnit = '') {
-                const tr = document.createElement("tr");
-                const unit = item.unit || parentUnit || '';
-                
-                let nameCellHtml = "";
-                if (type === "main") {
-                    tr.className = "main-variable-row";
-                    nameCellHtml = `<strong>${item.name.trim()}</strong>`;
-                    if (unit) {
-                         nameCellHtml += ` <span class="variable-unit">(${unit})</span>`;
-                    }
-                } else {
-                    tr.className = "sub-variable-row";
-                    const checkboxId = `check-sub-${Math.random().toString(36).substring(2, 9)}`;
-                    // Add checkbox for sub-variable
-                    nameCellHtml = `
-                        <div class="pdf-toggle">
-                            <input type="checkbox" id="${checkboxId}" class="pdf-select-sub" checked>
-                            <label for="${checkboxId}">${item.name.trim()}</label>
-                        </div>
-                    `;
-                    
-                    // Add event listener to this specific row's checkbox
-                    tr.addEventListener("change", (e) => {
-                        if (e.target.classList.contains("pdf-select-sub")) {
-                            tr.classList.toggle("pdf-hidden", !e.target.checked);
-                        }
-                    });
-                }
 
-                tr.innerHTML = `<td>${nameCellHtml}</td>`;
-                
-                let prevValue = null;
-                
-                for (const week of globalWeekLabels) {
-                    const td = document.createElement("td");
-                    const value = item.data[week];
-                    
-                    if (value === null || value === undefined) {
-                        td.innerHTML = `<span class="no-data">–</span>`;
-                    } else {
-                        const formattedValue = value.toLocaleString("en-US");
-                        let deltaHtml = "";
-                        
-                        // Calculate delta vs. *previous non-null* value
-                        if (prevValue !== null) {
-                            const delta = value - prevValue;
-                            deltaHtml = formatDelta(delta, unit);
-                        }
-                        
-                        td.innerHTML = `<strong>${formattedValue}${unit === '%' ? '%' : ''}</strong>${deltaHtml}`;
-                        
-                        // Update prevValue only if current value is numeric
-                        prevValue = value;
-                    }
-                    tr.appendChild(td);
-                }
-                
-                return tr;
-            }
-            
             /**
-             * Helper to format the delta value with sign and color.
+             * Creates the HTML string for a data table (weeks + delta).
              */
-            function formatDelta(delta, unit) {
-                if (delta === 0) {
-                    return ` <span class="delta">(0)</span>`;
-                }
+            function createDataTable(data, unit) {
+                if (!data) return '<p>No data available.</p>';
                 
-                const sign = delta > 0 ? '+' : '';
-                const className = delta > 0 ? 'delta-pos' : 'delta-neg';
-                const formattedDelta = delta.toLocaleString("en-US");
+                const weeks = Object.keys(data);
+                if (weeks.length === 0) return '<p>No data available.</p>';
+
+                let valueRow = `<tr><td>Value ${unit ? `(${unit})` : ''}</td>`;
+                let deltaRow = `<tr><td>Delta</td>`;
                 
-                return ` <span class="delta ${className}">(${sign}${formattedDelta}${unit === '%' ? '%' : ''})</span>`;
+                let lastValue = null;
+
+                weeks.forEach(week => {
+                    const value = data[week];
+                    
+                    // Value Row
+                    if (value === null || value === undefined) {
+                        valueRow += `<td class="null-value">–</td>`;
+                    } else {
+                        valueRow += `<td>${value.toLocaleString()}</td>`;
+                    }
+                    
+                    // Delta Row
+                    let deltaHtml = `<td class="null-value"></td>`;
+                    if (value !== null && value !== undefined) {
+                        if (lastValue !== null) {
+                            const delta = value - lastValue;
+                            const className = delta > 0 ? 'delta-increase' : (delta < 0 ? 'delta-decrease' : '');
+                            const sign = delta > 0 ? '+' : '';
+                            deltaHtml = `<td class="${className}">${sign}${delta.toLocaleString()}</td>`;
+                        }
+                        lastValue = value; // Update lastValue only if current is not null
+                    }
+                    deltaRow += deltaHtml;
+                });
+                
+                valueRow += '</tr>';
+                deltaRow += '</tr>';
+
+                return `
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                ${weeks.map(week => `<th>${week}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${valueRow}
+                            ${deltaRow}
+                        </tbody>
+                    </table>
+                `;
             }
 
             /**
              * Renders a chart for a given variable and its sub-variables.
              */
-            function renderChart(canvasId, variable) {
-                const ctx = document.getElementById(canvasId).getContext("2d");
+            function renderChart(canvasEl, variable) {
+                const ctx = canvasEl.getContext('2d');
+                const labels = Object.keys(variable.data);
                 
                 const datasets = [];
+
+                // Base colors for charts
                 const colors = [
-                    '#007bff', '#28a745', '#dc3545', '#ffc107', 
-                    '#17a2b8', '#6f42c1', '#fd7e14', '#20c997'
+                    '#007bff', '#28a745', '#dc3545', '#ffc107', '#17a2b8', '#6f42c1', '#fd7e14'
                 ];
-                
-                // Main variable dataset
+
+                // Add main variable dataset
                 datasets.push({
                     label: variable.name.trim(),
-                    data: globalWeekLabels.map(week => variable.data[week] ?? null),
+                    data: labels.map(label => variable.data[label] === null ? NaN : variable.data[label]),
                     borderColor: colors[0],
-                    backgroundColor: colors[0] + '33', // 20% opacity
+                    backgroundColor: colors[0] + '33', // 33 for alpha
+                    borderWidth: 2,
                     fill: false,
-                    tension: 0.1,
-                    borderWidth: 3
+                    tension: 0.1
                 });
-                
-                // Sub-variable datasets
-                variable.subVariables.forEach((sub, index) => {
-                    const color = colors[(index + 1) % colors.length];
-                    datasets.push({
-                        label: sub.name.trim(),
-                        data: globalWeekLabels.map(week => sub.data[week] ?? null),
-                        borderColor: color,
-                        backgroundColor: color + '33',
-                        fill: false,
-                        tension: 0.1,
-                        borderWidth: 2,
-                        borderDash: [5, 5] // Dotted line for sub-vars
+
+                // Add sub-variable datasets
+                if (variable.subVariables) {
+                    variable.subVariables.forEach((subVar, index) => {
+                        datasets.push({
+                            label: subVar.name.trim(),
+                            data: labels.map(label => subVar.data[label] === null ? NaN : subVar.data[label]),
+                            borderColor: colors[(index + 1) % colors.length],
+                            backgroundColor: colors[(index + 1) % colors.length] + '33',
+                            borderWidth: 2,
+                            borderDash: [5, 5], // Dashed line for sub-vars
+                            fill: false,
+                            tension: 0.1
+                        });
                     });
-                });
-                
-                const config = {
+                }
+
+                const chart = new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: globalWeekLabels,
+                        labels: labels,
                         datasets: datasets
                     },
                     options: {
                         responsive: true,
-                        maintainAspectRatio: false,
-                        spanGaps: false, // Don't draw lines across null values
+                        maintainAspectRatio: true,
                         scales: {
                             y: {
-                                beginAtZero: true
+                                beginAtZero: false // Allow non-zero start for better readability
                             }
                         },
                         plugins: {
                             legend: {
                                 position: 'bottom',
                             }
-                        }
+                        },
+                        // This handles null/NaN by not drawing a line
+                        spanGaps: false 
                     }
-                };
+                });
                 
-                chartInstances[canvasId] = new Chart(ctx, config);
+                chartInstances[canvasEl.id] = chart;
             }
-            
+
             /**
-             * Toggles all PDF selection checkboxes on the page.
+             * Generates a landscape PDF of the dashboard, respecting checkboxes.
+             */
+            async function generatePdf() {
+                loaderOverlay.style.display = 'flex';
+                exportPdfBtn.disabled = true;
+                
+                const elementsToToggle = [];
+
+                // 1. Find all elements that should be hidden based on checkboxes
+                document.querySelectorAll('.variable-container').forEach(varEl => {
+                    const mainCheckbox = varEl.querySelector('.pdf-toggle-main');
+                    if (!mainCheckbox.checked) {
+                        // If main var is unchecked, hide its table, notes, and chart
+                        const table = varEl.querySelector('.pdf-main-table');
+                        const notes = varEl.querySelector('.pdf-notes');
+                        const chart = varEl.querySelector('.pdf-chart');
+                        if (table) elementsToToggle.push(table);
+                        if (notes) elementsToToggle.push(notes);
+                        if (chart) elementsToToggle.push(chart);
+                    }
+                });
+                
+                document.querySelectorAll('.sub-variable-container').forEach(subVarEl => {
+                    const subCheckbox = subVarEl.querySelector('.pdf-toggle-sub');
+                    if (!subCheckbox.checked) {
+                        // If sub-var is unchecked, hide the whole container
+                        elementsToToggle.push(subVarEl);
+                    }
+                });
+                
+                // 2. Hide them
+                elementsToToggle.forEach(el => el.classList.add('pdf-hide'));
+
+                // 3. Generate PDF from the visible dashboard
+                try {
+                    const dashboard = document.getElementById('dashboard-container');
+                    const canvas = await html2canvas(dashboard, {
+                        scale: 2, // Higher resolution
+                        useCORS: true,
+                        windowWidth: 1200 // Force a consistent width
+                    });
+                    
+                    const imgData = canvas.toDataURL('image/png');
+                    
+                    // A4 Landscape dimensions in points: 841.89 pt (width) x 595.28 pt (height)
+                    const pdfWidth = 841.89;
+                    const pdfHeight = 595.28;
+                    
+                    // Calculate image dimensions to fit PDF width
+                    const imgWidth = canvas.width;
+                    const imgHeight = canvas.height;
+                    const ratio = imgHeight / imgWidth;
+                    const pageContentHeight = pdfWidth * ratio; // Total height of the image when scaled to PDF width
+                    
+                    const doc = new jsPDF({
+                        orientation: 'landscape',
+                        unit: 'pt',
+                        format: 'a4'
+                    });
+
+                    let position = 0;
+                    const pageMargin = 20; // Small margin
+                    const usableWidth = pdfWidth - (2 * pageMargin);
+                    const usableHeight = pdfHeight - (2 * pageMargin);
+                    const usableContentHeight = usableWidth * ratio;
+                    
+                    let totalPages = Math.ceil(usableContentHeight / usableHeight);
+                    
+                    if (totalPages === 0) totalPages = 1;
+
+                    for (let i = 0; i < totalPages; i++) {
+                        if (i > 0) {
+                            doc.addPage();
+                        }
+                        // Calculate the y-position of the image slice for this page
+                        // The y-offset in addImage is negative
+                        const yOffset = -(i * usableHeight * (imgWidth / usableWidth));
+                        
+                        // We use the canvas directly for addImage to get better quality
+                        doc.addImage(canvas, 'PNG', pageMargin, pageMargin, usableWidth, usableContentHeight, undefined, 'FAST');
+                        
+                        position -= usableHeight;
+                    }
+
+                    doc.save('dashboard-report.pdf');
+                    
+                } catch (err) {
+                    showError(`Error generating PDF: ${err.message}`);
+                    console.error(err);
+                } finally {
+                    // 4. Unhide all elements
+                    elementsToToggle.forEach(el => el.classList.remove('pdf-hide'));
+                    loaderOverlay.style.display = 'none';
+                    exportPdfBtn.disabled = false;
+                }
+            }
+
+            /**
+             * Toggles all PDF checkboxes on the page.
              */
             function toggleAllCheckboxes(checked) {
-                document.querySelectorAll('.pdf-select-main, .pdf-select-sub').forEach(checkbox => {
-                    if (checkbox.checked !== checked) {
-                        checkbox.checked = checked;
-                        // Dispatch change event to trigger visibility/class toggling
-                        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-                    }
+                document.querySelectorAll('.pdf-toggle-main, .pdf-toggle-sub').forEach(cb => {
+                    cb.checked = checked;
                 });
             }
 
             /**
-             * Generates a landscape PDF from the dashboard content.
+             * Helper functions for error display and button state.
              */
-            async function generatePDF() {
-                statusDiv.style.display = "block";
-                exportButton.disabled = true;
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.style.display = 'block';
+            }
 
-                // Add a class to the body to apply PDF-specific styles
-                document.body.classList.add("prep-for-pdf");
-                
-                const content = document.getElementById("dashboard-content");
-                const { jsPDF } = window.jspdf;
-
-                try {
-                    // Give the browser a moment to apply new styles
-                    await new Promise(resolve => setTimeout(resolve, 100));
-
-                    const canvas = await html2canvas(content, {
-                        scale: 2, // Higher scale for better quality
-                        useCORS: true,
-                        logging: false,
-                        windowWidth: 1400, // Set a consistent width for rendering
-                    });
-
-                    const imgData = canvas.toDataURL("image/png");
-                    
-                    // A4 Landscape dimensions in mm: 297w x 210h
-                    const pdf = new jsPDF({
-                        orientation: "landscape",
-                        unit: "mm",
-                        format: "a4",
-                    });
-
-                    const pdfWidth = pdf.internal.pageSize.getWidth();
-                    const pdfHeight = pdf.internal.pageSize.getHeight();
-                    
-                    const canvasWidth = canvas.width;
-                    const canvasHeight = canvas.height;
-
-                    // Calculate the aspect ratio
-                    const ratio = canvasWidth / canvasHeight;
-                    const imgWidth = pdfWidth;
-                    const imgHeight = pdfWidth / ratio;
-
-                    let heightLeft = imgHeight;
-                    let position = 0;
-                    
-                    // Add the first page
-                    pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-                    heightLeft -= pdfHeight;
-
-                    // Add new pages as needed
-                    while (heightLeft > 0) {
-                        position = -heightLeft;
-                        pdf.addPage();
-                        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-                        heightLeft -= pdfHeight;
-                    }
-
-                    pdf.save("dashboard-report.pdf");
-
-                } catch (err) {
-                    console.error("Error generating PDF:", err);
-                    showError("Could not generate PDF. See console for details.");
-                } finally {
-                    // Clean up styles
-                    document.body.classList.remove("prep-for-pdf");
-                    statusDiv.style.display = "none";
-                    exportButton.disabled = false;
-                }
+            function clearError() {
+                errorMessage.textContent = '';
+                errorMessage.style.display = 'none';
             }
             
-            // --- Auto-load data if available (for testing) ---
-            // You can paste your JSON content here to auto-load on start
-            const testData = ${file:data_full.json};
-            if (testData) {
-                try {
-                    renderDashboard(testData);
-                } catch (e) {
-                    console.error("Could not auto-load test data.", e);
-                }
+            function disableButtons() {
+                exportPdfBtn.disabled = true;
+                selectAllBtn.disabled = true;
+                deselectAllBtn.disabled = true;
             }
         });
     </script>
