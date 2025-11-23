@@ -3,586 +3,684 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analyse Export</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <title>Marketing Data PDF Exporter</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        /* Basisstijlen */
-        body { background-color: #f8f9fa; }
-        .container-main { padding: 30px; }
-        .category-container { border: 1px solid #dee2e6; border-radius: 0.3rem; margin-bottom: 20px; padding: 15px; background-color: #ffffff; }
-        .variable-card { margin-bottom: 15px; padding: 15px; border: 1px solid #e9ecef; border-left: 5px solid #0d6efd; border-radius: 0.25rem; background-color: #f8f9fa; }
-        .sub-variable-row { font-size: 0.9em; color: #495057; padding-left: 20px; border-top: 1px dotted #ced4da; }
-        .notes { margin-top: 10px; padding: 10px; background-color: #fff3cd; color: #664d03; border-radius: 0.25rem; font-style: italic; font-size: 0.9em; }
-        .chart-container { max-height: 350px; margin-top: 20px; }
-        
-        /* PDF Stijlen */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            padding: 30px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .file-input-wrapper {
+            margin-bottom: 20px;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            border: 2px dashed #667eea;
+            border-radius: 6px;
+            cursor: pointer;
+            background: #f8f9ff;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+        }
+
+        .selection-panel {
+            padding: 30px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .category-section {
+            margin-bottom: 30px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .category-header {
+            background: #f7fafc;
+            padding: 15px 20px;
+            font-weight: 600;
+            font-size: 18px;
+            color: #2d3748;
+            border-bottom: 2px solid #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .category-header input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .variable-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .variable-item:last-child {
+            border-bottom: none;
+        }
+
+        .variable-main {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .variable-main input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .variable-main label {
+            font-weight: 500;
+            color: #2d3748;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .sub-variables {
+            margin-left: 30px;
+            padding-left: 15px;
+            border-left: 2px solid #e2e8f0;
+        }
+
+        .sub-variable {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+        }
+
+        .sub-variable input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .sub-variable label {
+            color: #4a5568;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        /* PDF Styles - AANGEPAST VOOR LIGGEND, GECENTREERD EN EEN PAGINA PER TABEL */
+        .pdf-content {
+            display: none;
+        }
+
+        /* Liggend A4 is 297mm x 210mm */
+        .pdf-page {
+            width: 297mm; /* Liggend breedte */
+            min-height: 210mm; /* Liggend hoogte */
+            padding: 10mm; /* Minder padding voor meer ruimte */
+            background: white;
+            page-break-after: always;
+            
+            /* Centrering van de content op de pagina */
+            display: flex; 
+            flex-direction: column;
+            justify-content: center; /* Verticaal centreren */
+            align-items: center; /* Horizontaal centreren */
+            text-align: center;
+        }
+
+        .pdf-title-page {
+            min-height: 190mm; /* Aangepast naar nieuwe hoogte (210mm - 2*10mm padding) */
+        }
+
+        .pdf-title-page h1 {
+            font-size: 48px;
+            color: #2d3748;
+            margin-bottom: 20px;
+        }
+
+        .pdf-title-page .subtitle {
+            font-size: 24px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .pdf-category-divider {
+            text-align: center;
+            padding: 30px 0;
+            margin: 40px 0;
+            border-top: 3px solid #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .pdf-category-divider h2 {
+            font-size: 32px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .pdf-variable-container {
+            /* Dwingt de container om de pagina te vullen en een break te forceren */
+            margin-bottom: 0;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            page-break-inside: avoid;
+            page-break-after: always; /* Zorgt ervoor dat elke tabel een nieuwe pagina start */
+        }
+
+        .pdf-variable-header {
+            background: #f7fafc;
+            padding: 12px 15px;
+            font-weight: 600;
+            font-size: 16px;
+            color: #2d3748;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .pdf-variable-content {
+            padding: 10px; /* Minder padding */
+        }
+
+        .pdf-data-table {
+            width: 100%;
+            max-width: 95%; /* Laat een beetje ruimte over binnen de container */
+            margin-left: auto; /* Centreer de tabel */
+            margin-right: auto;
+            border-collapse: collapse;
+            margin-bottom: 0;
+            font-size: 11px;
+        }
+
+        .pdf-data-table th,
+        .pdf-data-table td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #e2e8f0;
+        }
+
+        .pdf-data-table th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .pdf-data-table td {
+            color: #4a5568;
+        }
+
+        /* Verberg Grafieken en Notities voor deze 'tabel-per-pagina' export */
+        .pdf-chart-container, .pdf-notes {
+            display: none !important; 
+        }
+
+        .delta-positive {
+            color: #38a169;
+            font-weight: 600;
+        }
+
+        .delta-negative {
+            color: #e53e3e;
+            font-weight: 600;
+        }
+
+        .delta-neutral {
+            color: #718096;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            font-size: 18px;
+            color: #667eea;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
         @media print {
-            .no-print { display: none !important; }
-            .category-container, .variable-card { page-break-inside: avoid; margin-bottom: 15px; } 
-        }
-        
-        /* PDF Tabelstijlen (Geoptimaliseerd voor Delta's en Landscape) */
-        .pdf-data-table { border-collapse: collapse; width: 100%; font-size: 0.75em; margin-top: 10px; border: 1px solid #ddd; table-layout: fixed; }
-        .pdf-data-table th, .pdf-data-table td { 
-            border: 1px solid #eee; 
-            padding: 4px 3px; 
-            text-align: right; 
-            white-space: nowrap; 
-        }
-        .pdf-data-table th { background-color: #f1f1f1; font-weight: bold; text-align: center; }
-        .pdf-data-table .label-cell { text-align: left; width: 150px; } 
-        
-        /* Stijlen voor Delta kolommen */
-        .pdf-data-table .delta-header {
-            background-color: #e9f5ff;
-            color: #0d6efd;
-            font-weight: normal;
-            font-size: 0.9em;
-        }
-        .pdf-data-table .delta-cell {
-            background-color: #f7fcff;
-            color: #495057;
-            font-size: 0.9em;
-            font-weight: bold;
-        }
-        .delta-positive { color: #198754; } /* Groen voor toename */
-        .delta-negative { color: #dc3545; } /* Rood voor afname */
-        
-        /* Zorgt dat de gewone data cellen ook wit zijn in PDF */
-        .pdf-data-table td:not(.delta-cell):not(.label-cell) {
-             background-color: #ffffff;
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            @page {
+                size: A4 landscape; /* Stel @page in voor print-weergave */
+                margin: 0;
+            }
+            .pdf-page {
+                margin: 0;
+                page-break-after: always;
+            }
         }
     </style>
 </head>
 <body>
-
-    <div class="container container-main">
-        <h1 class="mb-4">Analyse Dashboard</h1>
-
-        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 p-3 border rounded no-print bg-white">
-            <div class="d-flex align-items-center me-3 mb-2 mb-md-0">
-                <label for="jsonUpload" class="form-label mb-0 me-3 fw-bold">1. Upload JSON-bestand:</label>
-                <input class="form-control" type="file" id="jsonUpload" accept=".json">
-            </div>
-            
-            <div class="mb-2 mb-md-0">
-                <p class="lead mb-0">2. Selecteer variabelen en klik op exporteren.</p>
-            </div>
-            
-            <button id="exportPdfBtn" class="btn btn-primary btn-lg" disabled>
-                <i class="bi bi-file-earmark-pdf"></i> Exporteren naar PDF
-            </button>
+    <div class="app-container">
+        <div class="header">
+            <h1>📊 Marketing Data PDF Exporter</h1>
+            <p>Importeer je JSON en genereer een professionele PDF rapportage</p>
         </div>
 
-        <div id="contentContainer">
-            <div class="alert alert-info text-center">
-                <i class="bi bi-upload"></i> **Upload uw JSON-bestand** om de analyse te starten.
+        <div class="controls">
+            <div class="file-input-wrapper">
+                <input type="file" id="jsonFile" accept=".json" />
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-primary" id="selectAllBtn">Alles selecteren</button>
+                <button class="btn btn-primary" id="deselectAllBtn">Alles deselecteren</button>
+                <button class="btn btn-secondary" id="generatePdfBtn" disabled>📄 Genereer PDF</button>
             </div>
         </div>
 
+        <div class="loading" id="loading">⏳ PDF wordt gegenereerd...</div>
+
+        <div class="selection-panel" id="selectionPanel"></div>
     </div>
 
+    <div class="pdf-content" id="pdfContent"></div>
+
     <script>
-// Globale variabelen
-    const allCharts = {};
-    let globalJsonData = null; 
+        let jsonData = null;
+        let selections = {};
+        let chartInstances = {};
 
-    // --- HULPFUNCTIES ---
+        document.getElementById('jsonFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    try {
+                        jsonData = JSON.parse(event.target.result);
+                        initializeSelections();
+                        renderSelectionPanel();
+                        document.getElementById('generatePdfBtn').disabled = false;
+                    } catch (error) {
+                        alert('Fout bij het lezen van JSON: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
 
-    function getWeekLabels(data) {
-        const labels = new Set();
-        // Gebruik Object.keys().sort() om een consistente sortering te garanderen 
-        const weekKeys = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5'];
-        
-        for (const category in data) {
-            data[category].variables.forEach(variable => {
-                Object.keys(variable.data).forEach(key => labels.add(key));
-                variable.subVariables.forEach(sub => {
-                    Object.keys(sub.data).forEach(key => labels.add(key));
+        function initializeSelections() {
+            selections = {};
+            Object.keys(jsonData).forEach(category => {
+                selections[category] = {};
+                jsonData[category].variables.forEach((variable, vIndex) => {
+                    selections[category][vIndex] = {
+                        main: true,
+                        subs: {}
+                    };
+                    if (variable.subVariables) {
+                        variable.subVariables.forEach((sub, sIndex) => {
+                            selections[category][vIndex].subs[sIndex] = true;
+                        });
+                    }
                 });
             });
         }
-        // Filter op labels die daadwerkelijk bestaan en sorteer ze op de weekvolgorde
-        return weekKeys.filter(key => labels.has(key));
-    }
-    
-    // Functie om de delta (verschil) te berekenen tussen opeenvolgende weken
-    function calculateDeltas(dataValues, weekLabels) {
-        const deltas = {};
-        for (let i = 1; i < weekLabels.length; i++) {
-            const currentWeek = weekLabels[i];
-            const previousWeek = weekLabels[i - 1];
-            const currentValue = dataValues[currentWeek];
-            const previousValue = dataValues[previousWeek];
-            
-            // We kunnen alleen een delta berekenen als beide waarden numeriek zijn
-            if (typeof currentValue === 'number' && typeof previousValue === 'number') {
-                const delta = currentValue - previousValue;
-                // Rond af op 1 decimaal
-                deltas[currentWeek] = Math.round(delta * 10) / 10;
-            } else {
-                deltas[currentWeek] = null; // Gebruik null als de delta niet kan worden berekend
-            }
-        }
-        return deltas;
-    }
 
-    // Webweergave: Null-waarden vervangen door "-"
-    function generateDataRows(dataObject, unit, weekLabels) {
-        // Gebruik de weekLabels om de volgorde te bepalen
-        return `
-            <div class="row small">
-                ${weekLabels.map(week => {
-                    const value = dataObject[week];
-                    if (value === null) {
-                        return `<div class="col text-muted">-</div>`; 
-                    }
-                    return `<div class="col">${value}${unit}</div>`;
-                }).join('')}
-            </div>
-        `;
-    }
-    
-    function getValidData(dataObject, weekLabels) {
-        // Filtert de data op basis van de weekLabels en verwijdert null
-        return weekLabels.map(week => dataObject[week]).filter(value => value !== null);
-    }
+        function renderSelectionPanel() {
+            const panel = document.getElementById('selectionPanel');
+            panel.innerHTML = '';
 
-    function getSelectedDatasets(chartId, weekLabels) {
-        const datasets = [];
-        const checkboxes = document.querySelectorAll(`[data-chart-id="${chartId}"]`);
-        const colors = ['#0d6efd', '#dc3545', '#ffc107', '#198754', '#6f42c1', '#20c997', '#fd7e14', '#e637a0']; 
-        let colorIndex = 0;
+            Object.keys(jsonData).forEach(category => {
+                const categorySection = document.createElement('div');
+                categorySection.className = 'category-section';
 
-        checkboxes.forEach(checkbox => {
-            if (checkbox.checked) {
-                const label = checkbox.getAttribute('data-label');
-                // Haal de ruwe data op, niet alleen de gefilterde 'valid data'
-                const rawData = JSON.parse(checkbox.getAttribute('data-data-values')); 
+                const categoryHeader = document.createElement('div');
+                categoryHeader.className = 'category-header';
                 
-                // Zorg ervoor dat de data in de juiste volgorde wordt gebruikt voor de chart
-                const chartData = weekLabels.map(week => rawData[week]);
+                const categoryCheckbox = document.createElement('input');
+                categoryCheckbox.type = 'checkbox';
+                categoryCheckbox.checked = true;
+                categoryCheckbox.id = `cat-${category}`;
+                categoryCheckbox.addEventListener('change', function() {
+                    toggleCategory(category, this.checked);
+                });
 
-                // Controleer of er valide numerieke data is om te plotten
-                if (chartData.some(val => typeof val === 'number' && val !== null)) {
-                     datasets.push({
-                        label: label,
-                        data: chartData,
-                        borderColor: colors[colorIndex % colors.length],
-                        backgroundColor: colors[colorIndex % colors.length] + '40', 
-                        tension: 0.3, // Verhoog tension voor een mooiere lijn
-                        pointRadius: 4, // Maak punten duidelijker
-                        fill: false
+                const categoryLabel = document.createElement('span');
+                categoryLabel.textContent = category;
+
+                categoryHeader.appendChild(categoryCheckbox);
+                categoryHeader.appendChild(categoryLabel);
+                categorySection.appendChild(categoryHeader);
+
+                jsonData[category].variables.forEach((variable, vIndex) => {
+                    const variableItem = document.createElement('div');
+                    variableItem.className = 'variable-item';
+
+                    const variableMain = document.createElement('div');
+                    variableMain.className = 'variable-main';
+
+                    const mainCheckbox = document.createElement('input');
+                    mainCheckbox.type = 'checkbox';
+                    mainCheckbox.checked = selections[category][vIndex].main;
+                    mainCheckbox.id = `var-${category}-${vIndex}`;
+                    mainCheckbox.addEventListener('change', function() {
+                        selections[category][vIndex].main = this.checked;
                     });
-                    colorIndex++;
-                }
-            }
-        });
-        return datasets;
-    }
-    
-    function updateChart(event) {
-        const chartId = event.target.getAttribute('data-chart-id');
-        const chart = allCharts[chartId];
-        if (!chart || !globalJsonData) return;
 
-        const weekLabels = getWeekLabels(globalJsonData);
-        const datasets = getSelectedDatasets(chartId, weekLabels);
+                    const mainLabel = document.createElement('label');
+                    mainLabel.textContent = variable.name.trim();
+                    mainLabel.htmlFor = `var-${category}-${vIndex}`;
 
-        if (datasets.length > 0) {
-            chart.data.datasets = datasets;
-            // Update labels om ervoor te zorgen dat ze correct zijn ingesteld (nodig na init of bij selectie)
-            chart.data.labels = weekLabels;
-            chart.options.scales.y.title.text = chart.data.datasets[0].label.includes('(') ? chart.data.datasets[0].label.match(/\((.*?)\)/)[1] : '';
-            chart.update();
-            document.getElementById(chartId).style.display = 'block';
-        } else {
-            document.getElementById(chartId).style.display = 'none';
+                    variableMain.appendChild(mainCheckbox);
+                    variableMain.appendChild(mainLabel);
+                    variableItem.appendChild(variableMain);
+
+                    if (variable.subVariables && variable.subVariables.length > 0) {
+                        const subVariables = document.createElement('div');
+                        subVariables.className = 'sub-variables';
+
+                        variable.subVariables.forEach((sub, sIndex) => {
+                            const subVariable = document.createElement('div');
+                            subVariable.className = 'sub-variable';
+
+                            const subCheckbox = document.createElement('input');
+                            subCheckbox.type = 'checkbox';
+                            subCheckbox.checked = selections[category][vIndex].subs[sIndex];
+                            subCheckbox.id = `sub-${category}-${vIndex}-${sIndex}`;
+                            subCheckbox.addEventListener('change', function() {
+                                selections[category][vIndex].subs[sIndex] = this.checked;
+                            });
+
+                            const subLabel = document.createElement('label');
+                            subLabel.textContent = sub.name;
+                            subLabel.htmlFor = `sub-${category}-${vIndex}-${sIndex}`;
+
+                            subVariable.appendChild(subCheckbox);
+                            subVariable.appendChild(subLabel);
+                            subVariables.appendChild(subVariable);
+                        });
+
+                        variableItem.appendChild(subVariables);
+                    }
+
+                    categorySection.appendChild(variableItem);
+                });
+
+                panel.appendChild(categorySection);
+            });
         }
-    }
 
-    function addEventListeners() {
-        document.querySelectorAll('.select-item').forEach(checkbox => {
-            checkbox.removeEventListener('change', updateChart); 
-            checkbox.addEventListener('change', updateChart);
+        function toggleCategory(category, checked) {
+            Object.keys(selections[category]).forEach(vIndex => {
+                selections[category][vIndex].main = checked;
+                Object.keys(selections[category][vIndex].subs).forEach(sIndex => {
+                    selections[category][vIndex].subs[sIndex] = checked;
+                });
+            });
+            renderSelectionPanel();
+        }
+
+        document.getElementById('selectAllBtn').addEventListener('click', function() {
+            Object.keys(selections).forEach(category => {
+                Object.keys(selections[category]).forEach(vIndex => {
+                    selections[category][vIndex].main = true;
+                    Object.keys(selections[category][vIndex].subs).forEach(sIndex => {
+                        selections[category][vIndex].subs[sIndex] = true;
+                    });
+                });
+            });
+            renderSelectionPanel();
         });
-    }
 
+        document.getElementById('deselectAllBtn').addEventListener('click', function() {
+            Object.keys(selections).forEach(category => {
+                Object.keys(selections[category]).forEach(vIndex => {
+                    selections[category][vIndex].main = false;
+                    Object.keys(selections[category][vIndex].subs).forEach(sIndex => {
+                        selections[category][vIndex].subs[sIndex] = false;
+                    });
+                });
+            });
+            renderSelectionPanel();
+        });
 
-    function generateContent(data) {
-        const container = document.getElementById('contentContainer');
-        container.innerHTML = ''; 
-        
-        const weekLabels = getWeekLabels(data);
+        document.getElementById('generatePdfBtn').addEventListener('click', generatePDF);
 
-        // Zorg ervoor dat alle vorige grafieken worden vernietigd
-        Object.values(allCharts).forEach(chart => chart.destroy());
-        Object.keys(allCharts).forEach(key => delete allCharts[key]);
+        function calculateDelta(current, previous) {
+            if (previous === null || current === null) return { value: '-', className: 'delta-neutral' };
+            const delta = current - previous;
+            if (delta === 0) return { value: '0', className: 'delta-neutral' };
+            const sign = delta > 0 ? '+' : '';
+            const className = delta > 0 ? 'delta-positive' : 'delta-negative';
+            return { value: `${sign}${delta}`, className };
+        }
 
-        for (const category in data) {
-            const categoryData = data[category];
-            const categoryName = category.charAt(0).toUpperCase() + category.substring(1).toLowerCase();
+        // AANGEPASTE generatePDF functie: 1 tabel per pagina, expliciete pagina breaks en Landscape optie
+        async function generatePDF() {
+            document.getElementById('loading').classList.add('active');
+            
+            // Charts worden niet meer gegenereerd, maar de opruiming is goed practice
+            Object.values(chartInstances).forEach(chart => chart.destroy());
+            chartInstances = {};
 
-            let categoryHtml = `
-                <div class="category-container" data-category="${categoryName}">
-                    <h2 class="text-primary border-bottom pb-2 mb-3">${categoryName}</h2>
+            const pdfContent = document.getElementById('pdfContent');
+            pdfContent.innerHTML = '';
+            pdfContent.style.display = 'block';
+
+            // 1. Title page
+            const titlePage = document.createElement('div');
+            titlePage.className = 'pdf-page pdf-title-page';
+            titlePage.innerHTML = `
+                <h1>REFORMER Studios</h1>
+                <div class="subtitle">Marketing Rapport</div>
             `;
+            pdfContent.appendChild(titlePage); // Pagina 1: Titel
 
-            categoryData.variables.forEach((variable, varIndex) => {
-                const cleanName = variable.name.trim(); 
-                const variableId = `${categoryName}-${varIndex}`;
-                const chartId = `chart-${variableId}`;
-
-                // Gebruik nu de weekLabels in de generateDataRows
-                const mainDataRows = generateDataRows(variable.data, variable.unit, weekLabels);
-
-                const subVariableHtml = variable.subVariables.map((sub, subIndex) => {
-                    const subVarId = `${variableId}-sub-${subIndex}`;
-                    const subDataRows = generateDataRows(sub.data, variable.unit, weekLabels);
-                    return `
-                        <div class="row sub-variable-row align-items-center" data-label="${sub.name.trim()}" data-data-unit="${variable.unit}" data-data-values='${JSON.stringify(sub.data)}'>
-                            <div class="col-1 no-print">
-                                <input type="checkbox" checked class="form-check-input select-item" id="${subVarId}" data-chart-id="${chartId}" data-label="${sub.name.trim()}" data-data-values='${JSON.stringify(sub.data)}' data-data='${JSON.stringify(getValidData(sub.data, weekLabels))}' data-type="sub">
-                            </div>
-                            <div class="col-3 pt-2">
-                                <label class="form-check-label fw-semibold" for="${subVarId}">${sub.name.trim()}</label>
-                            </div>
-                            <div class="col-8 pt-2">
-                                ${subDataRows}
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-
-                categoryHtml += `
-                    <div class="variable-card" id="card-${variableId}" data-main-data-values='${JSON.stringify(variable.data)}' data-data-unit="${variable.unit}">
-                        <div class="row align-items-center">
-                            <div class="col-1 no-print">
-                                <input type="checkbox" checked class="form-check-input select-item" id="${variableId}" data-chart-id="${chartId}" data-label="${cleanName}" data-data-values='${JSON.stringify(variable.data)}' data-data='${JSON.stringify(getValidData(variable.data, weekLabels))}' data-type="main">
-                            </div>
-                            <div class="col-3">
-                                <label class="form-check-label h5 mb-0" for="${variableId}">
-                                    ${cleanName} ${variable.unit ? `(${variable.unit})` : ''}
-                                </label>
-                            </div>
-                            <div class="col-8">
-                                <div class="row fw-bold text-muted small border-bottom mb-1 week-labels-row">
-                                    ${weekLabels.map(label => `<div class="col">${label}</div>`).join('')}
-                                </div>
-                                ${mainDataRows}
-                            </div>
-                        </div>
-
-                        ${subVariableHtml}
-
-                        ${variable.notes.trim() ? `<div class="notes">${variable.notes.trim()}</div>` : ''}
-
-                        <div class="chart-container">
-                            <canvas id="${chartId}"></canvas>
-                        </div>
-                    </div>
-                `;
-            });
-
-            categoryHtml += `</div>`;
-            container.innerHTML += categoryHtml;
-        }
-        
-        initializeCharts(data);
-        addEventListeners();
-    }
-
-    function initializeCharts(data) {
-        const labels = getWeekLabels(data);
-        document.querySelectorAll('canvas').forEach(canvas => {
-            const chartId = canvas.id;
-            const datasets = getSelectedDatasets(chartId, labels); // Gebruik correcte labels
-
-            // Vernietig een eventueel bestaande Chart-instantie
-            if (allCharts[chartId]) {
-                allCharts[chartId].destroy();
-            }
-
-            if (datasets.length > 0) {
-                canvas.style.display = 'block';
-                const ctx = canvas.getContext('2d');
+            // Process categories and variables, each on its own page
+            for (const category of Object.keys(jsonData)) {
+                const variables = jsonData[category].variables;
+                const selectedVariables = [];
                 
-                allCharts[chartId] = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: labels, // Gebruik de correcte, gesorteerde labels
-                        datasets: datasets
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: { boxWidth: 20 }
-                            },
-                            tooltip: {
-                                mode: 'index',
-                                intersect: false,
-                            }
-                        },
-                        hover: {
-                            mode: 'nearest',
-                            intersect: true
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                title: {
-                                    display: true,
-                                    // Haal de unit op uit de label van de eerste dataset
-                                    text: datasets[0].label.includes('(') ? datasets[0].label.match(/\((.*?)\)/)[1] : ''
-                                }
-                            }
-                        }
-                    }
-                });
-            } else {
-                canvas.style.display = 'none';
-            }
-        });
-    }
-    
-    function handleFileUpload(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const jsonData = JSON.parse(e.target.result);
-                window.globalJsonData = jsonData;
-                generateContent(jsonData);
-                document.getElementById('exportPdfBtn').disabled = false;
-            } catch (error) {
-                console.error("Fout bij het parsen van de JSON:", error);
-                document.getElementById('contentContainer').innerHTML = '<div class="alert alert-danger"><strong>Fout:</strong> Ongeldig JSON-formaat. Controleer uw bestand.</div>';
-                document.getElementById('exportPdfBtn').disabled = true;
-            }
-        };
-        reader.readAsText(file);
-    }
-    
-    // --- Hulpfunctie voor vertraging (oplossing voor canvas rendering) ---
-    // Verhoogd naar 500ms voor een stabielere PDF-generatie
-    function delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-    // ---------------------------------------------------------------------
-
-    // Functie om de rij voor de PDF-tabel te creëren
-    function createRow(label, dataValues, isMain, weekLabels, unit) {
-        const deltas = calculateDeltas(dataValues, weekLabels); 
-        let rowHtml = `<tr class="${isMain ? 'main-row' : 'sub-row'}">`;
-        rowHtml += `<td class="label-cell">${label}</td>`;
-        
-        // Itereer door alle weken om WAARDE en DELTA afwisselend te plaatsen
-        weekLabels.forEach((week, index) => {
-            const value = dataValues[week];
-            
-            // 1. Weekly Value: Replace null with '-'
-            rowHtml += `<td>${value === null ? '-' : value + unit}</td>`;
-
-            // 2. Delta Value (Delta W(i+1) - W(i))
-            if (index < weekLabels.length - 1) { // Niet de laatste week
-                const nextWeek = weekLabels[index + 1];
-                // Delta W(i+1) - W(i) is opgeslagen onder key W(i+1)
-                const deltaValue = deltas[nextWeek]; 
-                
-                // Controleer op null of niet-numeriek en vervang door '-'
-                if (typeof deltaValue !== 'number' || deltaValue === null) {
-                    rowHtml += `<td class="delta-cell">-</td>`; 
-                } else {
-                    const sign = deltaValue >= 0 ? '+' : '';
-                    const deltaClass = deltaValue > 0 ? 'delta-positive' : (deltaValue < 0 ? 'delta-negative' : '');
-
-                    rowHtml += `<td class="delta-cell ${deltaClass}">${sign}${deltaValue}${unit}</td>`;
-                }
-            }
-        });
-        rowHtml += `</tr>`;
-        return rowHtml;
-    }
-    
-    // Functie om de PDF-tabel te creëren
-    function createPdfTable(variableCard, isMainChecked, weekLabels) {
-        const subCheckboxes = variableCard.querySelectorAll('input[data-type="sub"]');
-        
-        const mainLabelElement = variableCard.querySelector('label.h5');
-        // Verwijder de unit tussen haakjes uit de label
-        const mainLabelText = mainLabelElement ? mainLabelElement.textContent.replace(/\s\(.*?\)/, '').trim() : 'Onbekende Variabele';
-        const unit = variableCard.getAttribute('data-data-unit');
-
-        // 1. Maak de Header
-        let tableHtml = `<table class="pdf-data-table"><thead><tr><th class="label-cell">Variabele</th>`;
-        
-        weekLabels.forEach((label, index) => {
-            // Week Label voor de Waarde
-            tableHtml += `<th>${label}</th>`;
-            
-            // Delta Header (alleen als het niet de laatste week is)
-            if (index < weekLabels.length - 1) {
-                const currentWeekNum = index + 1;
-                const nextWeekNum = index + 2;
-                tableHtml += `<th class="delta-header">Δ (W${nextWeekNum}-W${currentWeekNum})</th>`;
-            }
-        });
-        tableHtml += `</tr></thead><tbody>`;
-
-        // 2. Vul de rijen
-        if (isMainChecked) {
-            const mainData = JSON.parse(variableCard.getAttribute('data-main-data-values'));
-            tableHtml += createRow(mainLabelText, mainData, true, weekLabels, unit);
-        }
-
-        subCheckboxes.forEach(subCheckbox => {
-            if (subCheckbox.checked) {
-                const subRowElement = subCheckbox.closest('.sub-variable-row');
-                const subLabel = subRowElement.getAttribute('data-label');
-                const subData = JSON.parse(subRowElement.getAttribute('data-data-values'));
-                tableHtml += createRow(subLabel, subData, false, weekLabels, unit);
-            }
-        });
-        
-        tableHtml += `</tbody></table>`;
-        return tableHtml;
-    }
-
-    // --- EXPORT FUNCTIE (Met kritische fixes) ---
-    function exportToPdf() {
-        document.getElementById('exportPdfBtn').disabled = true;
-
-        if (!window.globalJsonData) {
-            alert("Geen data geladen. Upload eerst een JSON-bestand.");
-            document.getElementById('exportPdfBtn').disabled = false;
-            return;
-        }
-        
-        // Gebruik de delay van 500ms voor een stabiele canvas conversie
-        delay(500).then(() => {
-            
-            const allWeekLabels = getWeekLabels(window.globalJsonData);
-
-            // Maak en voeg de tijdelijke container toe aan de DOM
-            const tempDiv = document.createElement('div');
-            tempDiv.id = 'pdf-content-temp';
-            
-            // 🛑 Fix 1: Plaats de DIV ver buiten beeld, maar houd de opacity op 1 
-            // zodat html2canvas de inhoud correct kan renderen.
-            tempDiv.style.position = 'absolute';
-            tempDiv.style.top = '-99999px'; 
-            tempDiv.style.left = '-99999px';
-            tempDiv.style.opacity = '1';
-            tempDiv.style.zIndex = '0';
-            tempDiv.style.width = '2000px'; // Zorg voor voldoende breedte in landscape
-            tempDiv.style.height = '100%';
-            tempDiv.style.overflow = 'hidden'; 
-            tempDiv.style.backgroundColor = '#ffffff'; 
-            document.body.appendChild(tempDiv); 
-            
-            // Hoofd wrapper met padding (deze wordt geëxporteerd)
-            const contentWrapper = document.createElement('div');
-            contentWrapper.style.padding = '0.5in';
-            contentWrapper.style.backgroundColor = '#ffffff'; 
-            contentWrapper.innerHTML = `<h1 style="margin-bottom: 20px; color: #333;">Analyse Dashboard Export</h1>`;
-            tempDiv.appendChild(contentWrapper);
-
-            // Bouw de gefilterde inhoud op
-            document.querySelectorAll('.category-container').forEach(categoryContainer => {
-                const categoryName = categoryContainer.querySelector('h2').textContent;
-                const tempCategoryContainer = document.createElement('div');
-                tempCategoryContainer.style.marginBottom = '20px';
-                tempCategoryContainer.style.pageBreakInside = 'avoid'; 
-                tempCategoryContainer.style.border = '1px solid #dee2e6';
-                tempCategoryContainer.style.padding = '15px';
-                tempCategoryContainer.style.backgroundColor = '#ffffff';
-
-                tempCategoryContainer.innerHTML = `<h3 style="color: #0d6efd; border-bottom: 2px solid #0d6efd; padding-bottom: 5px; margin-bottom: 15px;">${categoryName}</h3>`;
-                let hasVisibleVariable = false;
-
-                categoryContainer.querySelectorAll('.variable-card').forEach(variableCard => {
-                    const mainCheckbox = variableCard.querySelector('input[data-type="main"]');
-                    const subCheckboxes = variableCard.querySelectorAll('input[data-type="sub"]');
+                // Verbeterde selectielogica: exporteer de container als de hoofdvariabele OF ten minste één subvariabele is geselecteerd
+                for (let vIndex = 0; vIndex < variables.length; vIndex++) {
+                    const mainSelected = selections[category][vIndex].main;
+                    const subSelected = variables[vIndex].subVariables && Object.values(selections[category][vIndex].subs).some(s => s);
                     
-                    const isMainChecked = mainCheckbox && mainCheckbox.checked;
-                    const isAnySubChecked = Array.from(subCheckboxes).some(cb => cb.checked);
-
-                    if (isMainChecked || isAnySubChecked) {
-                        hasVisibleVariable = true;
-                        
-                        const tempVariableCard = document.createElement('div');
-                        tempVariableCard.style.padding = '15px';
-                        tempVariableCard.style.border = '1px solid #ccc';
-                        tempVariableCard.style.borderLeft = '5px solid #0d6efd';
-                        tempVariableCard.style.marginBottom = '15px';
-                        tempVariableCard.style.pageBreakInside = 'avoid';
-                        tempVariableCard.style.backgroundColor = '#ffffff'; 
-
-                        const mainLabel = variableCard.querySelector('label.h5').textContent;
-                        
-                        // 1. Titel
-                        tempVariableCard.innerHTML = `<h5 style="color: #333; margin-bottom: 5px;">${mainLabel}</h5>`;
-                        
-                        // 2. Data Tabel (Inclusief Interleaved Delta's)
-                        tempVariableCard.innerHTML += createPdfTable(variableCard, isMainChecked, allWeekLabels);
-
-                        // 3. Notities
-                        const notesElement = variableCard.querySelector('.notes');
-                        if (notesElement) {
-                            tempVariableCard.innerHTML += `<div style="margin-top: 15px; padding: 8px; background-color: #fcf8e3; border: 1px solid #faebcc; border-radius: 4px; font-size: 0.8em;">**Opmerking:** ${notesElement.textContent.trim()}</div>`;
-                        }
-
-                        // 4. Grafiek (Canvas omzetten naar afbeelding)
-                        const chartCanvas = variableCard.querySelector('canvas');
-                        if (chartCanvas && allCharts[chartCanvas.id]) {
-                            try {
-                                // 🛑 Fix 2: Gebruik de chart.js instantie om de afbeelding te maken
-                                const chartImage = allCharts[chartCanvas.id].toBase64Image(); 
-                                tempVariableCard.innerHTML += `<img src="${chartImage}" style="width: 100%; max-height: 350px; object-fit: contain; margin-top: 15px; border: 1px solid #ccc;">`;
-                            } catch(e) {
-                                console.error("Fout bij het converteren van canvas naar afbeelding:", e);
-                            }
-                        }
-                        
-                        tempCategoryContainer.appendChild(tempVariableCard);
+                    if (mainSelected || subSelected) {
+                        selectedVariables.push({ variable: variables[vIndex], vIndex });
                     }
-                });
+                }
 
-                if (hasVisibleVariable) {
-                    contentWrapper.appendChild(tempCategoryContainer);
+                if (selectedVariables.length === 0) continue;
+
+                // 2. Add category divider on its own page
+                const dividerPage = document.createElement('div');
+                dividerPage.className = 'pdf-page'; 
+                const divider = document.createElement('div');
+                divider.className = 'pdf-category-divider';
+                divider.innerHTML = `<h2>${category}</h2>`;
+                dividerPage.appendChild(divider);
+                pdfContent.appendChild(dividerPage); // Nieuwe Pagina: Categoriedeler
+
+                // 3. Add variables (one container per page)
+                for (const { variable, vIndex } of selectedVariables) {
+                    // Maak een nieuwe pagina voor elke variabele-tabel
+                    const variablePage = document.createElement('div');
+                    variablePage.className = 'pdf-page'; 
+
+                    const container = createVariableContainer(variable, category, vIndex);
+                    
+                    // De container is de enige inhoud op deze pagina en staat gecentreerd
+                    variablePage.appendChild(container);
+                    pdfContent.appendChild(variablePage); // Nieuwe Pagina: Variabele Tabel
+                }
+            }
+
+            // Gebruik een korte timeout voor html2pdf om de DOM te verwerken
+            setTimeout(() => {
+                const opt = {
+                    margin: 10,
+                    filename: 'marketing-rapport-liggend.pdf',
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'l' } // 'l' staat voor landscape
+                };
+
+                html2pdf().set(opt).from(pdfContent).save().then(() => {
+                    document.getElementById('loading').classList.remove('active');
+                    pdfContent.style.display = 'none';
+                });
+            }, 100);
+        }
+
+        // AANGEPASTE createVariableContainer functie: alleen tabel, numerieke waarden rechts uitgelijnd
+        function createVariableContainer(variable, category, vIndex) {
+            const container = document.createElement('div');
+            container.className = 'pdf-variable-container'; // Dwingt nu een pagina-einde af
+
+            const varHeader = document.createElement('div');
+            varHeader.className = 'pdf-variable-header';
+            varHeader.textContent = variable.name.trim();
+            container.appendChild(varHeader);
+
+            const content = document.createElement('div');
+            content.className = 'pdf-variable-content';
+
+            // Data table with delta values
+            const table = document.createElement('table');
+            table.className = 'pdf-data-table';
+            
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            headerRow.innerHTML = '<th>Variabele</th>';
+            const weeks = Object.keys(variable.data);
+            weeks.forEach((week, idx) => {
+                if (idx === 0) {
+                    headerRow.innerHTML += `<th style="text-align: right;">${week}</th>`; // Rechts uitlijnen
+                } else {
+                    headerRow.innerHTML += `<th style="text-align: right;">${week}<br><small>(Δ)</small></th>`; // Rechts uitlijnen
                 }
             });
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
 
-            // Start de PDF-generatie (A4 Landscape)
-            const opt = {
-                margin: 0.5, 
-                filename: 'Analyse_Export.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                // 🛑 Fix 3: Cruciaal om scrollY op 0 te houden, en scale te verhogen voor betere resolutie
-                html2canvas: { scale: 3, logging: false, scrollY: 0, useCORS: true }, 
-                jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
-            };
-
-            html2pdf().from(tempDiv).set(opt).save('Analyse_Export.pdf', () => {
-                document.getElementById('exportPdfBtn').disabled = false;
-                tempDiv.remove();
+            const tbody = document.createElement('tbody');
+            
+            // Main variable row
+            const mainRow = document.createElement('tr');
+            mainRow.innerHTML = `<td><strong>${variable.name.trim()}</strong></td>`;
+            const mainValues = Object.values(variable.data);
+            mainValues.forEach((value, idx) => {
+                if (idx === 0) {
+                    mainRow.innerHTML += `<td style="text-align: right;">${value !== null ? value : '-'}</td>`;
+                } else {
+                    const delta = calculateDelta(value, mainValues[idx - 1]);
+                    mainRow.innerHTML += `<td style="text-align: right;">${value !== null ? value : '-'}<br><span class="${delta.className}">${delta.value}</span></td>`;
+                }
             });
-        }); 
-    }
-    
-    // --- INITIALISATIE ---
-    document.addEventListener('DOMContentLoaded', () => {
-         document.getElementById('jsonUpload').addEventListener('change', handleFileUpload);
-         document.getElementById('exportPdfBtn').addEventListener('click', exportToPdf);
-    });
-</script>
+            tbody.appendChild(mainRow);
+
+            // Sub variables
+            if (variable.subVariables) {
+                variable.subVariables.forEach((sub, sIndex) => {
+                    if (selections[category][vIndex].subs[sIndex]) {
+                        const subRow = document.createElement('tr');
+                        subRow.innerHTML = `<td style="padding-left: 15px;">${sub.name}</td>`;
+                        const subValues = Object.values(sub.data);
+                        subValues.forEach((value, idx) => {
+                            if (idx === 0) {
+                                subRow.innerHTML += `<td style="text-align: right;">${value !== null ? value : '-'}</td>`;
+                            } else {
+                                const delta = calculateDelta(value, subValues[idx - 1]);
+                                subRow.innerHTML += `<td style="text-align: right;">${value !== null ? value : '-'}<br><span class="${delta.className}">${delta.value}</span></td>`;
+                            }
+                        });
+                        tbody.appendChild(subRow);
+                    }
+                });
+            }
+
+            table.appendChild(tbody);
+            content.appendChild(table);
+
+            // De Chart en Notes secties zijn verwijderd of verborgen in de CSS.
+            // Dit zorgt ervoor dat alleen de tabel op de pagina staat.
+
+            container.appendChild(content);
+            return container;
+        }
+
+        // De functie createChart is verwijderd omdat er geen grafieken meer worden gemaakt.
+    </script>
 </body>
 </html>
