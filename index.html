@@ -1,384 +1,426 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analytics Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- CDN Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
     <style>
         :root {
-            --primary-color: #3498db;
-            --secondary-color: #2ecc71;
-            --danger-color: #e74c3c;
-            --warning-color: #f39c12;
-            --light-gray: #f5f7fa;
-            --medium-gray: #e1e8ed;
-            --dark-gray: #34495e;
-            --text-color: #2c3e50;
-            --border-radius: 8px;
-            --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            --spacing-sm: 8px;
-            --spacing-md: 16px;
-            --spacing-lg: 24px;
+            --primary-color: #2563eb;
+            --secondary-color: #64748b;
+            --success-color: #22c55e;
+            --danger-color: #ef4444;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --border-color: #e2e8f0;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-lg: 0 4px 6px rgba(0,0,0,0.1);
         }
-
+        
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
-
+        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-light);
+            color: var(--text-primary);
             line-height: 1.6;
-            color: var(--text-color);
-            background-color: var(--light-gray);
-            padding: var(--spacing-md);
+            padding: 20px;
         }
-
+        
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
-
+        
         header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: var(--spacing-lg);
-            padding: var(--spacing-md);
-            background-color: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
+            background: var(--bg-white);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
         }
-
+        
         h1 {
-            font-size: 24px;
-            color: var(--dark-gray);
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: var(--text-primary);
         }
-
-        .controls {
+        
+        .upload-section {
             display: flex;
-            gap: var(--spacing-md);
+            gap: 15px;
             align-items: center;
+            flex-wrap: wrap;
         }
-
+        
         input[type="file"] {
-            padding: var(--spacing-sm);
-            border: 1px solid var(--medium-gray);
-            border-radius: var(--border-radius);
+            padding: 10px 15px;
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
         }
-
-        button {
-            background-color: var(--primary-color);
+        
+        input[type="file"]:hover {
+            border-color: var(--primary-color);
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            background: var(--primary-color);
             color: white;
             border: none;
-            padding: var(--spacing-sm) var(--spacing-md);
-            border-radius: var(--border-radius);
+            border-radius: 8px;
             cursor: pointer;
-            font-weight: 500;
-            transition: background-color 0.2s;
-        }
-
-        button:hover {
-            background-color: #2980b9;
-        }
-
-        #export-pdf {
-            background-color: var(--secondary-color);
-        }
-
-        #export-pdf:hover {
-            background-color: #27ae60;
-        }
-
-        .category {
-            margin-bottom: var(--spacing-lg);
-            background-color: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            overflow: hidden;
-        }
-
-        .category-header {
-            background-color: var(--dark-gray);
-            color: white;
-            padding: var(--spacing-md);
-            font-size: 20px;
+            font-size: 15px;
             font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: var(--shadow);
         }
-
-        .variable {
-            padding: var(--spacing-md);
-            border-bottom: 1px solid var(--medium-gray);
+        
+        .btn:hover {
+            background: #1d4ed8;
+            box-shadow: var(--shadow-lg);
         }
-
-        .variable:last-child {
-            border-bottom: none;
+        
+        .btn:disabled {
+            background: var(--secondary-color);
+            cursor: not-allowed;
         }
-
+        
+        .btn-secondary {
+            background: var(--secondary-color);
+        }
+        
+        .btn-secondary:hover {
+            background: #475569;
+        }
+        
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .category-container {
+            background: var(--bg-white);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+            page-break-inside: avoid;
+        }
+        
+        .category-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid var(--primary-color);
+        }
+        
+        .variable-container {
+            background: #fafbfc;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border: 1px solid var(--border-color);
+            page-break-inside: avoid;
+        }
+        
         .variable-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: var(--spacing-md);
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
-
+        
         .variable-title {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-sm);
-        }
-
-        .variable-name {
             font-size: 18px;
             font-weight: 600;
+            color: var(--text-primary);
+            flex: 1;
         }
-
-        .tags {
-            display: flex;
-            gap: var(--spacing-sm);
-            margin-top: var(--spacing-sm);
-        }
-
-        .tag {
-            background-color: var(--medium-gray);
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-        }
-
-        .unit {
-            font-size: 14px;
-            color: var(--dark-gray);
-            margin-left: var(--spacing-sm);
-        }
-
+        
         .checkbox-container {
             display: flex;
             align-items: center;
-            gap: var(--spacing-sm);
+            gap: 8px;
         }
-
-        .checkbox-container input {
+        
+        .checkbox-container input[type="checkbox"] {
             width: 18px;
             height: 18px;
+            cursor: pointer;
         }
-
-        table {
+        
+        .checkbox-container label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        
+        .tags {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .tag {
+            padding: 4px 12px;
+            background: #dbeafe;
+            color: #1e40af;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .data-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: var(--spacing-md);
+            margin-bottom: 20px;
+            font-size: 14px;
         }
-
-        th, td {
-            padding: var(--spacing-sm);
-            text-align: center;
-            border: 1px solid var(--medium-gray);
+        
+        .data-table th,
+        .data-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
         }
-
-        th {
-            background-color: var(--light-gray);
+        
+        .data-table th {
+            background: var(--bg-light);
             font-weight: 600;
+            color: var(--text-secondary);
         }
-
+        
+        .data-table td {
+            color: var(--text-primary);
+        }
+        
         .delta-positive {
-            color: var(--secondary-color);
+            color: var(--success-color);
             font-weight: 600;
         }
-
+        
         .delta-negative {
             color: var(--danger-color);
             font-weight: 600;
         }
-
-        .subvariable {
-            margin-top: var(--spacing-md);
-            padding: var(--spacing-md);
-            background-color: var(--light-gray);
-            border-radius: var(--border-radius);
+        
+        .delta-neutral {
+            color: var(--text-secondary);
         }
-
-        .subvariable-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: var(--spacing-sm);
+        
+        .subvariable-container {
+            margin-left: 20px;
+            margin-top: 15px;
+            padding: 15px;
+            background: var(--bg-white);
+            border-left: 3px solid var(--secondary-color);
+            border-radius: 6px;
         }
-
-        .subvariable-name {
-            font-weight: 500;
+        
+        .subvariable-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 10px;
         }
-
-        .notes {
-            margin-top: var(--spacing-md);
-            padding: var(--spacing-md);
-            background-color: #fff9e6;
-            border-left: 4px solid var(--warning-color);
-            border-radius: var(--border-radius);
-        }
-
+        
         .chart-container {
-            margin-top: var(--spacing-md);
-            height: 300px;
             position: relative;
+            height: 300px;
+            margin: 20px 0;
+            page-break-inside: avoid;
         }
-
-        .error-message {
-            padding: var(--spacing-md);
-            background-color: #ffebee;
-            color: var(--danger-color);
-            border-radius: var(--border-radius);
-            margin-bottom: var(--spacing-md);
+        
+        .notes {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 6px;
+        }
+        
+        .notes-title {
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 5px;
+        }
+        
+        .notes-content {
+            color: #78350f;
+            font-size: 14px;
+        }
+        
+        #dashboard {
             display: none;
         }
-
-        .hidden {
-            display: none !important;
+        
+        #dashboard.loaded {
+            display: block;
         }
-
+        
+        .select-all-container {
+            margin: 15px 0;
+            padding: 15px;
+            background: var(--bg-light);
+            border-radius: 8px;
+        }
+        
         @media print {
             body {
-                background-color: white;
+                background: white;
                 padding: 0;
             }
             
-            .controls, button {
-                display: none;
+            .no-print {
+                display: none !important;
             }
             
-            .category {
-                box-shadow: none;
-                border: 1px solid var(--medium-gray);
-                break-inside: avoid;
+            .category-container,
+            .variable-container {
+                page-break-inside: avoid;
             }
             
-            .chart-container {
-                height: 200px;
+            @page {
+                size: A4 landscape;
+                margin: 15mm;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>Analytics Dashboard</h1>
-            <div class="controls">
-                <input type="file" id="file-upload" accept="application/json">
-                <button id="select-all">Select All</button>
-                <button id="deselect-all">Deselect All</button>
-                <button id="export-pdf">Export to PDF</button>
+        <header class="no-print">
+            <h1>📊 Analytics Dashboard</h1>
+            <div class="upload-section">
+                <input type="file" id="fileInput" accept="application/json">
+                <button class="btn" id="exportBtn" disabled>Export naar PDF</button>
+                <button class="btn btn-secondary" id="selectAllBtn" disabled>Selecteer alles</button>
+                <button class="btn btn-secondary" id="deselectAllBtn" disabled>Deselecteer alles</button>
             </div>
+            <div id="errorMessage"></div>
         </header>
         
-        <div id="error-message" class="error-message"></div>
-        
         <div id="dashboard"></div>
+        <div id="pdfContent" style="display: none;"></div>
     </div>
-
+    
     <script>
-        // Global variables
-        let chartInstances = [];
+        // Global state
         let jsonData = null;
-
-        // DOM elements
-        const fileUpload = document.getElementById('file-upload');
-        const dashboard = document.getElementById('dashboard');
-        const errorMessage = document.getElementById('error-message');
-        const selectAllBtn = document.getElementById('select-all');
-        const deselectAllBtn = document.getElementById('deselect-all');
-        const exportPdfBtn = document.getElementById('export-pdf');
-
-        // Event listeners
-        fileUpload.addEventListener('change', handleFileUpload);
-        selectAllBtn.addEventListener('click', selectAll);
-        deselectAllBtn.addEventListener('click', deselectAll);
-        exportPdfBtn.addEventListener('click', exportToPDF);
-
-        // File upload handler
+        let charts = [];
+        
+        // Initialize event listeners
+        document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+        document.getElementById('exportBtn').addEventListener('click', exportToPDF);
+        document.getElementById('selectAllBtn').addEventListener('click', () => toggleAllCheckboxes(true));
+        document.getElementById('deselectAllBtn').addEventListener('click', () => toggleAllCheckboxes(false));
+        
+        // Handle file upload
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
-
+            
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
                     jsonData = JSON.parse(e.target.result);
                     renderDashboard(jsonData);
-                    errorMessage.style.display = 'none';
+                    document.getElementById('exportBtn').disabled = false;
+                    document.getElementById('selectAllBtn').disabled = false;
+                    document.getElementById('deselectAllBtn').disabled = false;
+                    document.getElementById('errorMessage').innerHTML = '';
                 } catch (error) {
-                    showError('Invalid JSON file: ' + error.message);
+                    showError('Ongeldige JSON: ' + error.message);
                 }
-            };
-            reader.onerror = function() {
-                showError('Error reading file');
             };
             reader.readAsText(file);
         }
-
-        // Error display
+        
+        // Show error message
         function showError(message) {
-            errorMessage.textContent = message;
-            errorMessage.style.display = 'block';
-            dashboard.innerHTML = '';
+            document.getElementById('errorMessage').innerHTML = 
+                `<div class="error">${message}</div>`;
         }
-
-        // Dashboard rendering
-        function renderDashboard(data) {
-            dashboard.innerHTML = '';
-            chartInstances = [];
-
-            // Render each category
-            for (const [categoryName, categoryData] of Object.entries(data)) {
-                renderCategory(categoryName, categoryData);
-            }
-        }
-
-        // Render a category
-        function renderCategory(categoryName, categoryData) {
-            const categoryDiv = document.createElement('div');
-            categoryDiv.className = 'category';
-            categoryDiv.id = `category-${categoryName}`;
-
-            const headerDiv = document.createElement('div');
-            headerDiv.className = 'category-header';
-            headerDiv.textContent = categoryName;
-            categoryDiv.appendChild(headerDiv);
-
-            // Render each variable in the category
-            categoryData.variables.forEach(variable => {
-                renderVariable(categoryDiv, variable, categoryName);
+        
+        // Toggle all checkboxes
+        function toggleAllCheckboxes(checked) {
+            document.querySelectorAll('.variable-checkbox, .subvariable-checkbox').forEach(cb => {
+                cb.checked = checked;
             });
-
-            dashboard.appendChild(categoryDiv);
         }
-
-        // Render a variable
-        function renderVariable(categoryDiv, variable, categoryName) {
-            const variableDiv = document.createElement('div');
-            variableDiv.className = 'variable';
-            variableDiv.id = `variable-${categoryName}-${variable.name.trim().replace(/\s+/g, '-')}`;
-
-            // Variable header
-            const headerDiv = document.createElement('div');
-            headerDiv.className = 'variable-header';
-
-            const titleDiv = document.createElement('div');
-            titleDiv.className = 'variable-title';
-
-            const nameSpan = document.createElement('span');
-            nameSpan.className = 'variable-name';
-            nameSpan.textContent = variable.name.trim();
-
-            const unitSpan = document.createElement('span');
-            unitSpan.className = 'unit';
-            unitSpan.textContent = variable.unit ? `(${variable.unit})` : '';
-
-            titleDiv.appendChild(nameSpan);
-            titleDiv.appendChild(unitSpan);
-
+        
+        // Render dashboard
+        function renderDashboard(data) {
+            // Destroy existing charts
+            charts.forEach(chart => chart.destroy());
+            charts = [];
+            
+            const dashboard = document.getElementById('dashboard');
+            dashboard.innerHTML = '';
+            dashboard.className = 'loaded';
+            
+            // Iterate through categories
+            Object.keys(data).forEach(categoryKey => {
+                const category = data[categoryKey];
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'category-container';
+                categoryDiv.innerHTML = `<h2 class="category-title">${categoryKey}</h2>`;
+                
+                // Iterate through variables
+                category.variables.forEach((variable, varIndex) => {
+                    const variableDiv = createVariableElement(variable, categoryKey, varIndex);
+                    categoryDiv.appendChild(variableDiv);
+                });
+                
+                dashboard.appendChild(categoryDiv);
+            });
+        }
+        
+        // Create variable element
+        function createVariableElement(variable, categoryKey, varIndex) {
+            const div = document.createElement('div');
+            div.className = 'variable-container';
+            div.dataset.category = categoryKey;
+            div.dataset.varIndex = varIndex;
+            
+            // Clean variable name
+            const varName = variable.name.trim();
+            
+            // Header with checkbox
+            const header = document.createElement('div');
+            header.className = 'variable-header';
+            header.innerHTML = `
+                <div class="variable-title">${varName} ${variable.unit ? '(' + variable.unit + ')' : ''}</div>
+                <div class="checkbox-container">
+                    <input type="checkbox" class="variable-checkbox" id="var-${categoryKey}-${varIndex}" checked>
+                    <label for="var-${categoryKey}-${varIndex}">Opnemen in PDF</label>
+                </div>
+            `;
+            div.appendChild(header);
+            
             // Tags
             if (variable.tags && variable.tags.length > 0) {
                 const tagsDiv = document.createElement('div');
@@ -389,217 +431,162 @@
                     tagSpan.textContent = tag;
                     tagsDiv.appendChild(tagSpan);
                 });
-                titleDiv.appendChild(tagsDiv);
+                div.appendChild(tagsDiv);
             }
-
-            headerDiv.appendChild(titleDiv);
-
-            // Checkbox
-            const checkboxDiv = document.createElement('div');
-            checkboxDiv.className = 'checkbox-container';
-
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.id = `checkbox-${categoryName}-${variable.name.trim().replace(/\s+/g, '-')}`;
-            checkbox.checked = true;
-
-            const checkboxLabel = document.createElement('label');
-            checkboxLabel.setAttribute('for', checkbox.id);
-            checkboxLabel.textContent = 'Include in PDF';
-
-            checkboxDiv.appendChild(checkbox);
-            checkboxDiv.appendChild(checkboxLabel);
-            headerDiv.appendChild(checkboxDiv);
-
-            variableDiv.appendChild(headerDiv);
-
+            
             // Data table
             const table = createDataTable(variable.data, variable.unit);
-            variableDiv.appendChild(table);
-
+            div.appendChild(table);
+            
             // Subvariables
             if (variable.subVariables && variable.subVariables.length > 0) {
-                variable.subVariables.forEach(subVariable => {
-                    renderSubVariable(variableDiv, subVariable, categoryName, variable.name);
+                variable.subVariables.forEach((subVar, subIndex) => {
+                    const subDiv = createSubVariableElement(subVar, categoryKey, varIndex, subIndex);
+                    div.appendChild(subDiv);
                 });
             }
-
+            
+            // Chart
+            const chartCanvas = document.createElement('canvas');
+            chartCanvas.id = `chart-${categoryKey}-${varIndex}`;
+            const chartContainer = document.createElement('div');
+            chartContainer.className = 'chart-container';
+            chartContainer.appendChild(chartCanvas);
+            div.appendChild(chartContainer);
+            
+            // Create chart after element is added to DOM
+            setTimeout(() => {
+                createChart(chartCanvas.id, variable);
+            }, 0);
+            
             // Notes
             if (variable.notes && variable.notes.trim() !== '') {
                 const notesDiv = document.createElement('div');
                 notesDiv.className = 'notes';
-                notesDiv.textContent = variable.notes.trim();
-                variableDiv.appendChild(notesDiv);
+                notesDiv.innerHTML = `
+                    <div class="notes-title">📝 Opmerkingen:</div>
+                    <div class="notes-content">${variable.notes}</div>
+                `;
+                div.appendChild(notesDiv);
             }
-
-            // Chart
-            const chartContainer = document.createElement('div');
-            chartContainer.className = 'chart-container';
-            const chartId = `chart-${categoryName}-${variable.name.trim().replace(/\s+/g, '-')}`;
-            chartContainer.id = chartId;
-            variableDiv.appendChild(chartContainer);
-
-            categoryDiv.appendChild(variableDiv);
-
-            // Render chart after DOM is updated
-            setTimeout(() => {
-                renderChart(chartId, variable, categoryName);
-            }, 100);
+            
+            return div;
         }
-
-        // Render a subvariable
-        function renderSubVariable(parentDiv, subVariable, categoryName, parentVariableName) {
-            const subVariableDiv = document.createElement('div');
-            subVariableDiv.className = 'subvariable';
-
-            // Subvariable header
-            const headerDiv = document.createElement('div');
-            headerDiv.className = 'subvariable-header';
-
-            const nameSpan = document.createElement('span');
-            nameSpan.className = 'subvariable-name';
-            nameSpan.textContent = subVariable.name;
-
-            headerDiv.appendChild(nameSpan);
-
-            // Checkbox
-            const checkboxDiv = document.createElement('div');
-            checkboxDiv.className = 'checkbox-container';
-
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.id = `checkbox-${categoryName}-${parentVariableName.trim().replace(/\s+/g, '-')}-${subVariable.name.trim().replace(/\s+/g, '-')}`;
-            checkbox.checked = true;
-
-            const checkboxLabel = document.createElement('label');
-            checkboxLabel.setAttribute('for', checkbox.id);
-            checkboxLabel.textContent = 'Include in PDF';
-
-            checkboxDiv.appendChild(checkbox);
-            checkboxDiv.appendChild(checkboxLabel);
-            headerDiv.appendChild(checkboxDiv);
-
-            subVariableDiv.appendChild(headerDiv);
-
-            // Data table
-            const table = createDataTable(subVariable.data, '');
-            subVariableDiv.appendChild(table);
-
-            parentDiv.appendChild(subVariableDiv);
+        
+        // Create subvariable element
+        function createSubVariableElement(subVar, categoryKey, varIndex, subIndex) {
+            const div = document.createElement('div');
+            div.className = 'subvariable-container';
+            div.dataset.subIndex = subIndex;
+            
+            const header = document.createElement('div');
+            header.className = 'variable-header';
+            header.innerHTML = `
+                <div class="subvariable-title">${subVar.name}</div>
+                <div class="checkbox-container">
+                    <input type="checkbox" class="subvariable-checkbox" id="subvar-${categoryKey}-${varIndex}-${subIndex}" checked>
+                    <label for="subvar-${categoryKey}-${varIndex}-${subIndex}">Opnemen in PDF</label>
+                </div>
+            `;
+            div.appendChild(header);
+            
+            const table = createDataTable(subVar.data, '');
+            div.appendChild(table);
+            
+            return div;
         }
-
+        
         // Create data table with deltas
         function createDataTable(data, unit) {
-            const weeks = Object.keys(data);
-            const values = Object.values(data);
-            const deltas = calculateDeltas(values);
-
             const table = document.createElement('table');
+            table.className = 'data-table';
             
-            // Header row
+            const weeks = Object.keys(data);
+            
+            // Header
+            const thead = document.createElement('thead');
             const headerRow = document.createElement('tr');
-            const weekHeader = document.createElement('th');
-            weekHeader.textContent = 'Week';
-            headerRow.appendChild(weekHeader);
+            headerRow.innerHTML = '<th>Week</th><th>Waarde</th><th>Delta</th>';
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+            
+            // Body
+            const tbody = document.createElement('tbody');
+            let previousValue = null;
             
             weeks.forEach(week => {
-                const th = document.createElement('th');
-                th.textContent = week;
-                headerRow.appendChild(th);
-            });
-            table.appendChild(headerRow);
-            
-            // Value row
-            const valueRow = document.createElement('tr');
-            const valueLabel = document.createElement('td');
-            valueLabel.textContent = 'Value';
-            valueRow.appendChild(valueLabel);
-            
-            values.forEach(value => {
-                const td = document.createElement('td');
-                td.textContent = value !== null ? value + (unit ? ` ${unit}` : '') : '–';
-                valueRow.appendChild(td);
-            });
-            table.appendChild(valueRow);
-            
-            // Delta row
-            const deltaRow = document.createElement('tr');
-            const deltaLabel = document.createElement('td');
-            deltaLabel.textContent = 'Delta';
-            deltaRow.appendChild(deltaLabel);
-            
-            deltas.forEach(delta => {
-                const td = document.createElement('td');
-                if (delta !== null) {
-                    td.textContent = (delta > 0 ? '+' : '') + delta;
-                    td.className = delta >= 0 ? 'delta-positive' : 'delta-negative';
+                const value = data[week];
+                const row = document.createElement('tr');
+                
+                // Week cell
+                const weekCell = document.createElement('td');
+                weekCell.textContent = week;
+                row.appendChild(weekCell);
+                
+                // Value cell
+                const valueCell = document.createElement('td');
+                valueCell.textContent = value !== null ? value + (unit ? ' ' + unit : '') : '–';
+                row.appendChild(valueCell);
+                
+                // Delta cell
+                const deltaCell = document.createElement('td');
+                if (value !== null && previousValue !== null) {
+                    const delta = value - previousValue;
+                    const sign = delta > 0 ? '+' : '';
+                    deltaCell.textContent = sign + delta + (unit ? ' ' + unit : '');
+                    deltaCell.className = delta > 0 ? 'delta-positive' : delta < 0 ? 'delta-negative' : 'delta-neutral';
                 } else {
-                    td.textContent = '–';
+                    deltaCell.textContent = '–';
+                    deltaCell.className = 'delta-neutral';
                 }
-                deltaRow.appendChild(td);
+                row.appendChild(deltaCell);
+                
+                tbody.appendChild(row);
+                
+                // Update previous value for next iteration
+                if (value !== null) {
+                    previousValue = value;
+                }
             });
-            table.appendChild(deltaRow);
             
+            table.appendChild(tbody);
             return table;
         }
-
-        // Calculate deltas between consecutive non-null values
-        function calculateDeltas(values) {
-            const deltas = [];
-            let prevValue = null;
+        
+        // Create chart
+        function createChart(canvasId, variable) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
             
-            for (let i = 0; i < values.length; i++) {
-                const currentValue = values[i];
-                
-                if (currentValue === null) {
-                    deltas.push(null);
-                } else if (prevValue === null) {
-                    deltas.push(null);
-                    prevValue = currentValue;
-                } else {
-                    deltas.push(currentValue - prevValue);
-                    prevValue = currentValue;
-                }
-            }
-            
-            return deltas;
-        }
-
-        // Render chart for a variable
-        function renderChart(chartId, variable, categoryName) {
-            const ctx = document.getElementById(chartId).getContext('2d');
             const weeks = Object.keys(variable.data);
-            
-            // Prepare datasets
             const datasets = [];
             
-            // Main variable dataset
-            const mainData = Object.values(variable.data);
+            // Main variable data
+            const mainData = weeks.map(week => variable.data[week]);
             datasets.push({
                 label: variable.name.trim(),
                 data: mainData,
-                borderColor: '#3498db',
-                backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                tension: 0.1,
+                borderColor: '#2563eb',
+                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                tension: 0.4,
                 fill: true
             });
             
-            // Subvariable datasets
-            if (variable.subVariables && variable.subVariables.length > 0) {
-                const colors = ['#2ecc71', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c'];
-                
+            // Subvariables data
+            const colors = ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
+            if (variable.subVariables) {
                 variable.subVariables.forEach((subVar, index) => {
+                    const subData = weeks.map(week => subVar.data[week]);
                     datasets.push({
                         label: subVar.name,
-                        data: Object.values(subVar.data),
+                        data: subData,
                         borderColor: colors[index % colors.length],
-                        backgroundColor: 'transparent',
-                        tension: 0.1
+                        backgroundColor: colors[index % colors.length] + '20',
+                        tension: 0.4
                     });
                 });
             }
             
-            // Create chart
             const chart = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -609,287 +596,111 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    },
                     plugins: {
-                        title: {
+                        legend: {
                             display: true,
-                            text: `${variable.name.trim()} - ${categoryName}`
+                            position: 'bottom'
                         },
                         tooltip: {
                             mode: 'index',
                             intersect: false
                         }
-                    }
-                }
-            });
-            
-            chartInstances.push(chart);
-        }
-
-        // Select all checkboxes
-        function selectAll() {
-            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = true;
-            });
-        }
-
-        // Deselect all checkboxes
-        function deselectAll() {
-            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = false;
-            });
-        }
-
-        // Export to PDF
-        async function exportToPDF() {
-            if (!jsonData) {
-                showError('No data loaded. Please upload a JSON file first.');
-                return;
-            }
-
-            // Create a temporary container for PDF content
-            const pdfContainer = document.createElement('div');
-            pdfContainer.id = 'pdf-container';
-            pdfContainer.style.width = '1123px'; // A4 landscape width in pixels
-            pdfContainer.style.padding = '20px';
-            pdfContainer.style.backgroundColor = 'white';
-            
-            // Add title
-            const title = document.createElement('h1');
-            title.textContent = 'Analytics Report';
-            title.style.textAlign = 'center';
-            title.style.marginBottom = '30px';
-            pdfContainer.appendChild(title);
-            
-            // Process each category
-            for (const [categoryName, categoryData] of Object.entries(jsonData)) {
-                const categoryDiv = document.createElement('div');
-                categoryDiv.className = 'category';
-                categoryDiv.style.marginBottom = '30px';
-                categoryDiv.style.breakInside = 'avoid';
-                
-                const headerDiv = document.createElement('div');
-                headerDiv.className = 'category-header';
-                headerDiv.textContent = categoryName;
-                categoryDiv.appendChild(headerDiv);
-                
-                // Process each variable in the category
-                categoryData.variables.forEach(variable => {
-                    const variableCheckboxId = `checkbox-${categoryName}-${variable.name.trim().replace(/\s+/g, '-')}`;
-                    const variableCheckbox = document.getElementById(variableCheckboxId);
-                    
-                    if (variableCheckbox && variableCheckbox.checked) {
-                        const variableDiv = document.createElement('div');
-                        variableDiv.className = 'variable';
-                        
-                        // Variable header
-                        const variableHeader = document.createElement('div');
-                        variableHeader.className = 'variable-header';
-                        
-                        const titleDiv = document.createElement('div');
-                        titleDiv.className = 'variable-title';
-                        
-                        const nameSpan = document.createElement('span');
-                        nameSpan.className = 'variable-name';
-                        nameSpan.textContent = variable.name.trim();
-                        
-                        const unitSpan = document.createElement('span');
-                        unitSpan.className = 'unit';
-                        unitSpan.textContent = variable.unit ? `(${variable.unit})` : '';
-                        
-                        titleDiv.appendChild(nameSpan);
-                        titleDiv.appendChild(unitSpan);
-                        
-                        // Tags
-                        if (variable.tags && variable.tags.length > 0) {
-                            const tagsDiv = document.createElement('div');
-                            tagsDiv.className = 'tags';
-                            variable.tags.forEach(tag => {
-                                const tagSpan = document.createElement('span');
-                                tagSpan.className = 'tag';
-                                tagSpan.textContent = tag;
-                                tagsDiv.appendChild(tagSpan);
-                            });
-                            titleDiv.appendChild(tagsDiv);
-                        }
-                        
-                        variableHeader.appendChild(titleDiv);
-                        variableDiv.appendChild(variableHeader);
-                        
-                        // Data table
-                        const table = createDataTable(variable.data, variable.unit);
-                        variableDiv.appendChild(table);
-                        
-                        // Subvariables
-                        if (variable.subVariables && variable.subVariables.length > 0) {
-                            variable.subVariables.forEach(subVariable => {
-                                const subVariableCheckboxId = `checkbox-${categoryName}-${variable.name.trim().replace(/\s+/g, '-')}-${subVariable.name.trim().replace(/\s+/g, '-')}`;
-                                const subVariableCheckbox = document.getElementById(subVariableCheckboxId);
-                                
-                                if (subVariableCheckbox && subVariableCheckbox.checked) {
-                                    const subVariableDiv = document.createElement('div');
-                                    subVariableDiv.className = 'subvariable';
-                                    
-                                    const subHeaderDiv = document.createElement('div');
-                                    subHeaderDiv.className = 'subvariable-header';
-                                    
-                                    const subNameSpan = document.createElement('span');
-                                    subNameSpan.className = 'subvariable-name';
-                                    subNameSpan.textContent = subVariable.name;
-                                    
-                                    subHeaderDiv.appendChild(subNameSpan);
-                                    subVariableDiv.appendChild(subHeaderDiv);
-                                    
-                                    const subTable = createDataTable(subVariable.data, '');
-                                    subVariableDiv.appendChild(subTable);
-                                    
-                                    variableDiv.appendChild(subVariableDiv);
-                                }
-                            });
-                        }
-                        
-                        // Notes
-                        if (variable.notes && variable.notes.trim() !== '') {
-                            const notesDiv = document.createElement('div');
-                            notesDiv.className = 'notes';
-                            notesDiv.textContent = variable.notes.trim();
-                            variableDiv.appendChild(notesDiv);
-                        }
-                        
-                        // Chart
-                        const chartContainer = document.createElement('div');
-                        chartContainer.className = 'chart-container';
-                        chartContainer.style.height = '200px';
-                        
-                        // Create a canvas for the chart
-                        const canvas = document.createElement('canvas');
-                        chartContainer.appendChild(canvas);
-                        variableDiv.appendChild(chartContainer);
-                        
-                        categoryDiv.appendChild(variableDiv);
-                        
-                        // Render chart to the canvas
-                        setTimeout(() => {
-                            renderChartToCanvas(canvas, variable, categoryName);
-                        }, 100);
-                    }
-                });
-                
-                if (categoryDiv.children.length > 1) { // More than just the header
-                    pdfContainer.appendChild(categoryDiv);
-                }
-            }
-            
-            // Add to document temporarily
-            document.body.appendChild(pdfContainer);
-            
-            try {
-                // Generate PDF
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF('landscape', 'px', 'a4');
-                
-                // Use html2canvas to capture the content
-                const canvas = await html2canvas(pdfContainer, {
-                    scale: 2,
-                    useCORS: true,
-                    allowTaint: true,
-                    logging: false
-                });
-                
-                const imgData = canvas.toDataURL('image/png');
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = pdf.internal.pageSize.getHeight();
-                
-                // Calculate image dimensions to fit the page
-                const imgWidth = canvas.width;
-                const imgHeight = canvas.height;
-                const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-                const imgX = (pdfWidth - imgWidth * ratio) / 2;
-                const imgY = 30;
-                
-                pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
-                pdf.save('analytics-report.pdf');
-                
-            } catch (error) {
-                console.error('Error generating PDF:', error);
-                showError('Error generating PDF: ' + error.message);
-            } finally {
-                // Clean up
-                document.body.removeChild(pdfContainer);
-            }
-        }
-
-        // Render chart to a specific canvas (for PDF)
-        function renderChartToCanvas(canvas, variable, categoryName) {
-            const ctx = canvas.getContext('2d');
-            const weeks = Object.keys(variable.data);
-            
-            // Prepare datasets
-            const datasets = [];
-            
-            // Main variable dataset
-            const mainData = Object.values(variable.data);
-            datasets.push({
-                label: variable.name.trim(),
-                data: mainData,
-                borderColor: '#3498db',
-                backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                tension: 0.1,
-                fill: true
-            });
-            
-            // Subvariable datasets (only those selected)
-            if (variable.subVariables && variable.subVariables.length > 0) {
-                const colors = ['#2ecc71', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c'];
-                
-                variable.subVariables.forEach((subVar, index) => {
-                    const subVariableCheckboxId = `checkbox-${categoryName}-${variable.name.trim().replace(/\s+/g, '-')}-${subVar.name.trim().replace(/\s+/g, '-')}`;
-                    const subVariableCheckbox = document.getElementById(subVariableCheckboxId);
-                    
-                    if (subVariableCheckbox && subVariableCheckbox.checked) {
-                        datasets.push({
-                            label: subVar.name,
-                            data: Object.values(subVar.data),
-                            borderColor: colors[index % colors.length],
-                            backgroundColor: 'transparent',
-                            tension: 0.1
-                        });
-                    }
-                });
-            }
-            
-            // Create chart
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: weeks,
-                    datasets: datasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    },
                     scales: {
                         y: {
                             beginAtZero: true
                         }
-                    },
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: `${variable.name.trim()} - ${categoryName}`
-                        },
-                        legend: {
-                            display: datasets.length > 1
-                        }
                     }
                 }
             });
+            
+            charts.push(chart);
+        }
+        
+        // Export to PDF
+        async function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({
+                orientation: 'landscape',
+                unit: 'mm',
+                format: 'a4'
+            });
+            
+            // Create a clone of dashboard for PDF
+            const pdfContent = document.getElementById('pdfContent');
+            pdfContent.innerHTML = '';
+            pdfContent.style.display = 'block';
+            pdfContent.style.width = '1400px';
+            pdfContent.style.background = 'white';
+            pdfContent.style.padding = '20px';
+            
+            // Clone selected variables
+            const categories = document.querySelectorAll('.category-container');
+            categories.forEach(category => {
+                const categoryClone = document.createElement('div');
+                categoryClone.className = 'category-container';
+                categoryClone.innerHTML = `<h2 class="category-title">${category.querySelector('.category-title').textContent}</h2>`;
+                
+                const variables = category.querySelectorAll('.variable-container');
+                variables.forEach(variable => {
+                    const checkbox = variable.querySelector('.variable-checkbox');
+                    if (checkbox && checkbox.checked) {
+                        const varClone = variable.cloneNode(true);
+                        
+                        // Remove checkboxes from clone
+                        varClone.querySelectorAll('.checkbox-container').forEach(cb => cb.remove());
+                        
+                        // Filter subvariables
+                        const subVars = varClone.querySelectorAll('.subvariable-container');
+                        subVars.forEach((subVar, index) => {
+                            const subCheckbox = variable.querySelectorAll('.subvariable-checkbox')[index];
+                            if (subCheckbox && !subCheckbox.checked) {
+                                subVar.remove();
+                            } else {
+                                subVar.querySelectorAll('.checkbox-container').forEach(cb => cb.remove());
+                            }
+                        });
+                        
+                        categoryClone.appendChild(varClone);
+                    }
+                });
+                
+                if (categoryClone.children.length > 1) {
+                    pdfContent.appendChild(categoryClone);
+                }
+            });
+            
+            // Convert to PDF
+            try {
+                const canvas = await html2canvas(pdfContent, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false
+                });
+                
+                const imgData = canvas.toDataURL('image/png');
+                const imgWidth = 297; // A4 landscape width in mm
+                const pageHeight = 210; // A4 landscape height in mm
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                let heightLeft = imgHeight;
+                let position = 0;
+                
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+                
+                while (heightLeft > 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+                
+                pdf.save('analytics-report.pdf');
+            } catch (error) {
+                showError('Fout bij het genereren van PDF: ' + error.message);
+            }
+            
+            pdfContent.style.display = 'none';
         }
     </script>
 </body>
