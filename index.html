@@ -225,6 +225,13 @@
         
         table.horizontal-layout th:nth-child(2) {
             min-width: 180px;
+            max-width: 200px;
+        }
+        
+        table.horizontal-layout th:nth-child(n+3) {
+            min-width: 80px;
+            max-width: 100px;
+            white-space: nowrap;
         }
         
         table.horizontal-layout th:last-child {
@@ -249,6 +256,15 @@
             font-weight: 500;
             color: #2c3e50;
             background: #f8f9fa;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        table.horizontal-layout td:nth-child(n+3) {
+            min-width: 80px;
+            max-width: 100px;
+            white-space: nowrap;
         }
         
         table.horizontal-layout td input[type="checkbox"] {
@@ -743,8 +759,10 @@
                     // Temporarily add to DOM for rendering
                     clone.style.position = 'absolute';
                     clone.style.left = '-9999px';
-                    clone.style.width = '1200px';
-                    clone.style.padding = '20px';
+                    clone.style.top = '0';
+                    clone.style.width = '1100px'; // Smaller width to fit better
+                    clone.style.padding = '15px';
+                    clone.style.boxSizing = 'border-box';
                     document.body.appendChild(clone);
                     
                     // Wait for rendering
@@ -752,11 +770,13 @@
                     
                     // Capture with html2canvas
                     const canvas = await html2canvas(clone, {
-                        scale: 2,
+                        scale: 1.5, // Lower scale to prevent cutoff
                         useCORS: true,
                         logging: false,
                         backgroundColor: '#ffffff',
-                        allowTaint: true
+                        allowTaint: true,
+                        windowWidth: 1100,
+                        windowHeight: clone.scrollHeight
                     });
                     
                     // Remove clone
@@ -770,18 +790,20 @@
                     
                     // Add image to PDF
                     const imgData = canvas.toDataURL('image/png');
-                    const pdfWidth = pdf.internal.pageSize.getWidth() - 20;
+                    const pdfWidth = pdf.internal.pageSize.getWidth() - 10; // Less margin
                     const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
                     
                     // Check if content fits on one page
-                    const pageHeight = pdf.internal.pageSize.getHeight() - 20;
+                    const pageHeight = pdf.internal.pageSize.getHeight() - 10;
                     
                     if (pdfHeight <= pageHeight) {
-                        pdf.addImage(imgData, 'PNG', 10, 10, pdfWidth, pdfHeight);
+                        pdf.addImage(imgData, 'PNG', 5, 5, pdfWidth, pdfHeight);
                     } else {
-                        // Content is too tall, scale it down
+                        // Content is too tall, fit to page height
                         const scale = pageHeight / pdfHeight;
-                        pdf.addImage(imgData, 'PNG', 10, 10, pdfWidth * scale, pageHeight);
+                        const scaledWidth = pdfWidth * scale;
+                        const scaledHeight = pageHeight;
+                        pdf.addImage(imgData, 'PNG', 5, 5, scaledWidth, scaledHeight);
                     }
                 }
                 
