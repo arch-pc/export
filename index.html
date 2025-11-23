@@ -46,11 +46,15 @@
             background-color: #f7fcff;
             color: #495057;
             font-size: 0.9em;
-            /* Zorgt dat + of - teken rood/groen is */
             font-weight: bold;
         }
         .delta-positive { color: #198754; } /* Groen voor toename */
         .delta-negative { color: #dc3545; } /* Rood voor afname */
+        
+        /* Zorgt dat de gewone data cellen ook wit zijn in PDF */
+        .pdf-data-table td:not(.delta-cell):not(.label-cell) {
+             background-color: #ffffff;
+        }
     </style>
 </head>
 <body>
@@ -137,7 +141,6 @@
             `;
         }
         
-        // ... (andere helper functies ongewijzigd) ...
         function getValidData(dataObject) {
             return Object.values(dataObject).filter(value => value !== null);
         }
@@ -170,7 +173,6 @@
         }
 
         function generateContent(data) {
-            // ... (logica om HTML te genereren) ...
             const container = document.getElementById('contentContainer');
             container.innerHTML = ''; 
             
@@ -181,7 +183,7 @@
 
             for (const category in data) {
                 const categoryData = data[category];
-                const categoryName = category.charAt(0) + category.substring(1).toLowerCase();
+                const categoryName = category.charAt(0).toUpperCase() + category.substring(1).toLowerCase(); // Maak de eerste letter hoofdletter
 
                 let categoryHtml = `
                     <div class="category-container" data-category="${categoryName}">
@@ -254,7 +256,6 @@
 
         function initializeCharts(data) {
             const labels = getWeekLabels(data);
-            // ... (chart.js initialisatie) ...
             document.querySelectorAll('canvas').forEach(canvas => {
                 const chartId = canvas.id;
                 const datasets = getSelectedDatasets(chartId);
@@ -262,6 +263,10 @@
                 if (datasets.length > 0) {
                     canvas.style.display = 'block';
                     const ctx = canvas.getContext('2d');
+                    // Vernietig de oude grafiek als deze bestaat
+                    if (allCharts[chartId]) {
+                        allCharts[chartId].destroy();
+                    }
                     allCharts[chartId] = new Chart(ctx, {
                         type: 'line',
                         data: {
@@ -314,14 +319,14 @@
             reader.readAsText(file);
         }
 
-        // --- PDF FUNCTIES (Gefixeerd) ---
+        // --- PDF FUNCTIES (Aangepast voor Interleaved Delta) ---
 
         function createRow(label, dataValues, isMain, weekLabels, unit) {
             const deltas = calculateDeltas(dataValues, weekLabels); 
             let rowHtml = `<tr class="${isMain ? 'main-row' : 'sub-row'}">`;
             rowHtml += `<td class="label-cell">${label}</td>`;
             
-            // Itereer door alle weken om waarde en delta te plaatsen
+            // Itereer door alle weken om WAARDE en DELTA afwisselend te plaatsen
             weekLabels.forEach((week, index) => {
                 const value = dataValues[week];
                 
@@ -334,7 +339,7 @@
                     // Delta W(i+1) - W(i) is opgeslagen onder key W(i+1)
                     const deltaValue = deltas[nextWeek]; 
                     
-                    // **FIX: Controleer op null of niet-numeriek en vervang door '-'**
+                    // Controleer op null of niet-numeriek en vervang door '-'
                     if (typeof deltaValue !== 'number' || deltaValue === null) {
                         rowHtml += `<td class="delta-cell">-</td>`; 
                     } else {
@@ -356,15 +361,17 @@
             const mainLabelText = variableCard.querySelector('label.h5').textContent.replace(/\s\(.*?\)/, '');
             const unit = variableCard.getAttribute('data-data-unit');
 
-            // 1. Maak de Header (met weeklabels en Delta-kolommen)
+            // 1. Maak de Header (met afwisselende weeklabels en Delta-kolommen)
             let tableHtml = `<table class="pdf-data-table"><thead><tr><th class="label-cell">Variabele</th>`;
             
             weekLabels.forEach((label, index) => {
+                // Week Label voor de Waarde
                 tableHtml += `<th>${label}</th>`;
+                
+                // Delta Header (alleen als het niet de laatste week is)
                 if (index < weekLabels.length - 1) {
                     const nextWeekNum = index + 2;
                     const currentWeekNum = index + 1;
-                    // **FIX: Correcte Delta Header**
                     tableHtml += `<th class="delta-header">Δ (W${nextWeekNum}-W${currentWeekNum})</th>`;
                 }
             });
@@ -403,15 +410,19 @@
             // Maak en voeg de tijdelijke container toe aan de DOM (voor stabiele conversie)
             const tempDiv = document.createElement('div');
             tempDiv.id = 'pdf-content-temp';
+            // Zorg ervoor dat de tijdelijke div geen stijlen van de hoofd-body erft
             tempDiv.style.position = 'absolute';
             tempDiv.style.left = '-9999px'; 
             tempDiv.style.width = '100%';
+            tempDiv.style.backgroundColor = '#ffffff'; // Expliciet wit
             document.body.appendChild(tempDiv); 
             
             // Hoofd wrapper met padding (deze wordt geëxporteerd)
-            tempDiv.innerHTML = `<div style="padding: 0.5in;"></div>`;
-            const contentWrapper = tempDiv.querySelector('div');
+            const contentWrapper = document.createElement('div');
+            contentWrapper.style.padding = '0.5in';
+            contentWrapper.style.backgroundColor = '#ffffff'; // Zorgt voor light mode
             contentWrapper.innerHTML = `<h1 style="margin-bottom: 20px; color: #333;">Analyse Dashboard Export</h1>`;
+            tempDiv.appendChild(contentWrapper);
 
             // Bouw de gefilterde inhoud op
             document.querySelectorAll('.category-container').forEach(categoryContainer => {
@@ -442,18 +453,20 @@
                         tempVariableCard.style.borderLeft = '5px solid #0d6efd';
                         tempVariableCard.style.marginBottom = '15px';
                         tempVariableCard.style.pageBreakInside = 'avoid';
+                        tempVariableCard.style.backgroundColor = '#ffffff'; // Zorgt voor light mode
 
                         const mainLabel = variableCard.querySelector('label.h5').textContent;
                         
                         // 1. Titel
                         tempVariableCard.innerHTML = `<h5 style="color: #333; margin-bottom: 5px;">${mainLabel}</h5>`;
                         
-                        // 2. Data Tabel (Nu inclusief Delta's)
+                        // 2. Data Tabel (Nu inclusief Interleaved Delta's)
                         tempVariableCard.innerHTML += createPdfTable(variableCard, isMainChecked, allWeekLabels);
 
                         // 3. Notities
                         const notesElement = variableCard.querySelector('.notes');
                         if (notesElement) {
+                            // Style behouden voor leesbaarheid
                             tempVariableCard.innerHTML += `<div style="margin-top: 15px; padding: 8px; background-color: #fcf8e3; border: 1px solid #faebcc; border-radius: 4px; font-size: 0.8em;">**Opmerking:** ${notesElement.textContent.trim()}</div>`;
                         }
 
@@ -486,10 +499,36 @@
                 jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' } // Liggend A4 formaat
             };
 
+            // De `html2pdf` genereert standaard een naadloos bestand op basis van de elementen die het ziet.
             html2pdf().from(tempDiv).set(opt).save('Analyse_Export.pdf', () => {
                 document.getElementById('exportPdfBtn').disabled = false;
                 tempDiv.remove();
             });
+        }
+        
+        function addEventListeners() {
+             // Event listeners voor checkboxen om de grafiek te updaten
+            document.querySelectorAll('.select-item').forEach(checkbox => {
+                checkbox.removeEventListener('change', updateChart); // Voorkom dubbele listeners
+                checkbox.addEventListener('change', updateChart);
+            });
+        }
+        
+        function updateChart(event) {
+            const chartId = event.target.getAttribute('data-chart-id');
+            const chart = allCharts[chartId];
+            if (!chart) return;
+
+            const datasets = getSelectedDatasets(chartId);
+
+            if (datasets.length > 0) {
+                chart.data.datasets = datasets;
+                chart.update();
+                document.getElementById(chartId).style.display = 'block';
+            } else {
+                // Toon de grafiek niet als er geen datasets zijn
+                document.getElementById(chartId).style.display = 'none';
+            }
         }
         
         // --- INITIALISATIE ---
