@@ -18,23 +18,22 @@
         .notes { margin-top: 10px; padding: 10px; background-color: #fff3cd; color: #664d03; border-radius: 0.25rem; font-style: italic; font-size: 0.9em; }
         .chart-container { max-height: 350px; margin-top: 20px; }
         
-        /* PDF Stijlen (Belangrijk voor lay-out) */
+        /* PDF Stijlen */
         @media print {
             .no-print { display: none !important; }
-            /* Zorgt ervoor dat kaarten intact blijven op een pagina */
             .category-container, .variable-card { page-break-inside: avoid; margin-bottom: 15px; } 
         }
         
-        /* PDF Tabelstijlen (Geoptimaliseerd voor liggend formaat met extra Delta-kolommen) */
+        /* PDF Tabelstijlen (Geoptimaliseerd voor Delta's en Landscape) */
         .pdf-data-table { border-collapse: collapse; width: 100%; font-size: 0.75em; margin-top: 10px; border: 1px solid #ddd; table-layout: fixed; }
         .pdf-data-table th, .pdf-data-table td { 
             border: 1px solid #eee; 
-            padding: 4px 3px; /* Minder padding voor meer ruimte */
+            padding: 4px 3px; 
             text-align: right; 
-            white-space: nowrap; /* Voorkomt het afbreken van data */
+            white-space: nowrap; 
         }
         .pdf-data-table th { background-color: #f1f1f1; font-weight: bold; text-align: center; }
-        .pdf-data-table .label-cell { text-align: left; width: 150px; } /* Vaste breedte voor label */
+        .pdf-data-table .label-cell { text-align: left; width: 150px; } 
         
         /* Stijlen voor Delta kolommen */
         .pdf-data-table .delta-header {
@@ -47,7 +46,11 @@
             background-color: #f7fcff;
             color: #495057;
             font-size: 0.9em;
+            /* Zorgt dat + of - teken rood/groen is */
+            font-weight: bold;
         }
+        .delta-positive { color: #198754; } /* Groen voor toename */
+        .delta-negative { color: #dc3545; } /* Rood voor afname */
     </style>
 </head>
 <body>
@@ -79,6 +82,7 @@
     </div>
 
     <script>
+        // Globale variabelen
         const allCharts = {};
         let globalJsonData = null; 
 
@@ -106,22 +110,24 @@
                 const currentValue = dataValues[currentWeek];
                 const previousValue = dataValues[previousWeek];
                 
+                // We kunnen alleen een delta berekenen als beide waarden numeriek zijn
                 if (typeof currentValue === 'number' && typeof previousValue === 'number') {
-                    // Afronden op 1 decimaal voor netheid
                     const delta = currentValue - previousValue;
+                    // Rond af op 1 decimaal of houd het integer als het een integer is
                     deltas[currentWeek] = Math.round(delta * 10) / 10;
                 } else {
-                    deltas[currentWeek] = null;
+                    deltas[currentWeek] = null; // Gebruik null als de delta niet kan worden berekend
                 }
             }
             return deltas;
         }
 
-        // Webweergave: "n/a" vervangen door "-"
+        // Webweergave: Null-waarden vervangen door "-"
         function generateDataRows(dataObject, unit) {
             return `
                 <div class="row small">
                     ${Object.values(dataObject).map(value => {
+                        // **FIX: n/a vervangen door '-'**
                         if (value === null) {
                             return `<div class="col text-muted">-</div>`; 
                         }
@@ -130,7 +136,8 @@
                 </div>
             `;
         }
-
+        
+        // ... (andere helper functies ongewijzigd) ...
         function getValidData(dataObject) {
             return Object.values(dataObject).filter(value => value !== null);
         }
@@ -162,9 +169,8 @@
             return datasets;
         }
 
-        // --- HOOFD RENDERING & INITIALISATIE (Ongewijzigd, behalve calls naar generateDataRows) ---
-
         function generateContent(data) {
+            // ... (logica om HTML te genereren) ...
             const container = document.getElementById('contentContainer');
             container.innerHTML = ''; 
             
@@ -248,7 +254,7 @@
 
         function initializeCharts(data) {
             const labels = getWeekLabels(data);
-            
+            // ... (chart.js initialisatie) ...
             document.querySelectorAll('canvas').forEach(canvas => {
                 const chartId = canvas.id;
                 const datasets = getSelectedDatasets(chartId);
@@ -308,7 +314,40 @@
             reader.readAsText(file);
         }
 
-        // --- PDF FUNCTIES (Geoptimaliseerd voor Delta's, Landscape en N/A) ---
+        // --- PDF FUNCTIES (Gefixeerd) ---
+
+        function createRow(label, dataValues, isMain, weekLabels, unit) {
+            const deltas = calculateDeltas(dataValues, weekLabels); 
+            let rowHtml = `<tr class="${isMain ? 'main-row' : 'sub-row'}">`;
+            rowHtml += `<td class="label-cell">${label}</td>`;
+            
+            // Itereer door alle weken om waarde en delta te plaatsen
+            weekLabels.forEach((week, index) => {
+                const value = dataValues[week];
+                
+                // 1. Weekly Value: Replace null with '-'
+                rowHtml += `<td>${value === null ? '-' : value + unit}</td>`;
+
+                // 2. Delta Value (Delta W(i+1) - W(i))
+                if (index < weekLabels.length - 1) { // Niet de laatste week
+                    const nextWeek = weekLabels[index + 1];
+                    // Delta W(i+1) - W(i) is opgeslagen onder key W(i+1)
+                    const deltaValue = deltas[nextWeek]; 
+                    
+                    // **FIX: Controleer op null of niet-numeriek en vervang door '-'**
+                    if (typeof deltaValue !== 'number' || deltaValue === null) {
+                        rowHtml += `<td class="delta-cell">-</td>`; 
+                    } else {
+                        const sign = deltaValue >= 0 ? '+' : '';
+                        const deltaClass = deltaValue > 0 ? 'delta-positive' : (deltaValue < 0 ? 'delta-negative' : '');
+
+                        rowHtml += `<td class="delta-cell ${deltaClass}">${sign}${deltaValue}${unit}</td>`;
+                    }
+                }
+            });
+            rowHtml += `</tr>`;
+            return rowHtml;
+        }
 
         function createPdfTable(variableCard, isMainChecked, weekLabels) {
             const mainCheckbox = variableCard.querySelector('input[data-type="main"]');
@@ -325,42 +364,16 @@
                 if (index < weekLabels.length - 1) {
                     const nextWeekNum = index + 2;
                     const currentWeekNum = index + 1;
+                    // **FIX: Correcte Delta Header**
                     tableHtml += `<th class="delta-header">Δ (W${nextWeekNum}-W${currentWeekNum})</th>`;
                 }
             });
             tableHtml += `</tr></thead><tbody>`;
 
-            // 2. Hulpmiddel om data rij te maken
-            const createRow = (label, dataValues, isMain) => {
-                const deltas = calculateDeltas(dataValues, weekLabels); 
-                let rowHtml = `<tr class="${isMain ? 'main-row' : 'sub-row'}">`;
-                rowHtml += `<td class="label-cell">${label}</td>`;
-                
-                weekLabels.forEach((week, index) => {
-                    const value = dataValues[week];
-                    const delta = deltas[week];
-                    
-                    // 1. Weekly Value (null wordt nu '-')
-                    rowHtml += `<td>${value === null ? '-' : value + unit}</td>`;
-
-                    // 2. Delta Value
-                    if (index < weekLabels.length - 1) {
-                        if (delta === null) {
-                            rowHtml += `<td class="delta-cell">-</td>`;
-                        } else {
-                            const sign = delta > 0 ? '+' : '';
-                            rowHtml += `<td class="delta-cell">${sign}${delta}${unit}</td>`;
-                        }
-                    }
-                });
-                rowHtml += `</tr>`;
-                return rowHtml;
-            };
-
-            // 3. Vul de rijen
+            // 2. Vul de rijen
             if (isMainChecked) {
                 const mainData = JSON.parse(variableCard.getAttribute('data-main-data-values'));
-                tableHtml += createRow(mainLabelText, mainData, true);
+                tableHtml += createRow(mainLabelText, mainData, true, weekLabels, unit);
             }
 
             subCheckboxes.forEach(subCheckbox => {
@@ -368,7 +381,7 @@
                     const subRowElement = subCheckbox.closest('.sub-variable-row');
                     const subLabel = subRowElement.getAttribute('data-label');
                     const subData = JSON.parse(subRowElement.getAttribute('data-data-values'));
-                    tableHtml += createRow(subLabel, subData, false);
+                    tableHtml += createRow(subLabel, subData, false, weekLabels, unit);
                 }
             });
             
@@ -387,7 +400,7 @@
 
             const allWeekLabels = getWeekLabels(window.globalJsonData);
 
-            // Maak en voeg de tijdelijke container toe aan de DOM
+            // Maak en voeg de tijdelijke container toe aan de DOM (voor stabiele conversie)
             const tempDiv = document.createElement('div');
             tempDiv.id = 'pdf-content-temp';
             tempDiv.style.position = 'absolute';
@@ -470,7 +483,7 @@
                 filename: 'Analyse_Export.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, logging: false, scrollY: 0, useCORS: true }, 
-                jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' } 
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' } // Liggend A4 formaat
             };
 
             html2pdf().from(tempDiv).set(opt).save('Analyse_Export.pdf', () => {
