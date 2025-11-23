@@ -219,6 +219,11 @@
         }
         
         table.horizontal-layout th:first-child {
+            min-width: 50px;
+            text-align: center;
+        }
+        
+        table.horizontal-layout th:nth-child(2) {
             min-width: 180px;
         }
         
@@ -235,9 +240,22 @@
         }
         
         table.horizontal-layout td:first-child {
+            text-align: center;
+            background: white;
+            padding: 3px;
+        }
+        
+        table.horizontal-layout td:nth-child(2) {
             font-weight: 500;
             color: #2c3e50;
             background: #f8f9fa;
+        }
+        
+        table.horizontal-layout td input[type="checkbox"] {
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+            margin: 0;
         }
         
         table.horizontal-layout td:last-child {
@@ -248,7 +266,7 @@
             border-bottom: none;
         }
         
-        table.horizontal-layout .subvar-row td:first-child {
+        table.horizontal-layout .subvar-row td:nth-child(2) {
             padding-left: 20px;
             font-weight: 400;
             color: #555;
@@ -435,13 +453,14 @@
         }
         
         // Render horizontal data table with main variable and subvariables combined
-        function renderCombinedTable(variable, unit) {
+        function renderCombinedTable(variable, unit, varId) {
             const weeks = sortWeeks(Object.keys(variable.data));
             
             let html = '<div class="data-table-horizontal"><table class="horizontal-layout">';
             
-            // Header row with variable name column + week labels
+            // Header row with checkbox column + variable name column + week labels
             html += '<thead><tr>';
+            html += '<th>PDF</th>'; // Checkbox column header
             html += '<th></th>'; // Empty cell for variable names column
             weeks.forEach(week => {
                 html += `<th>${week}</th>`;
@@ -450,6 +469,7 @@
             
             // Main variable row
             html += '<tr>';
+            html += `<td><input type="checkbox" class="pdf-select-row" data-var="${varId}" data-type="main" checked></td>`;
             html += `<td>${trimName(variable.name)}</td>`;
             weeks.forEach((week, index) => {
                 const value = variable.data[week];
@@ -464,8 +484,10 @@
             
             // Subvariables rows
             if (variable.subVariables && variable.subVariables.length > 0) {
-                variable.subVariables.forEach(subVar => {
+                variable.subVariables.forEach((subVar, subIdx) => {
+                    const subId = `${varId}-sub${subIdx}`;
                     html += '<tr class="subvar-row">';
+                    html += `<td><input type="checkbox" class="pdf-select-row" data-var="${varId}" data-subvar="${subId}" data-type="sub" checked></td>`;
                     html += `<td>${trimName(subVar.name)}</td>`;
                     weeks.forEach((week, index) => {
                         const value = subVar.data[week];
@@ -590,10 +612,6 @@
                         
                         html += `<div class="variable-block" data-variable="${varId}">`;
                         html += `<div class="variable-header">`;
-                        html += `<label class="checkbox-label">`;
-                        html += `<input type="checkbox" class="pdf-select" data-var="${varId}" checked>`;
-                        html += `<span>PDF</span>`;
-                        html += `</label>`;
                         html += `<div class="variable-name">${cleanName}</div>`;
                         html += `<div class="variable-meta">`;
                         
@@ -612,7 +630,7 @@
                         // Combined table with main variable and subvariables
                         html += `<div class="data-container">`;
                         html += `<div class="data-section">`;
-                        html += renderCombinedTable(variable, unit);
+                        html += renderCombinedTable(variable, unit, varId);
                         html += `</div>`;
                         
                         // Chart
@@ -656,7 +674,7 @@
             }, 100);
         }
         
-        // Export to PDF with charts
+        // Export to PDF with charts and selective rows
         async function exportToPDF() {
             const btn = document.getElementById('exportBtn');
             btn.disabled = true;
@@ -667,20 +685,46 @@
                 const pdf = new jsPDF('landscape', 'mm', 'a4');
                 let firstPage = true;
                 
-                // Get all variable blocks that should be in PDF
+                // Get all variable blocks
                 const blocks = document.querySelectorAll('.variable-block');
                 
                 for (const block of blocks) {
                     const varId = block.dataset.variable;
-                    const checkbox = block.querySelector(`input[data-var="${varId}"]`);
                     
-                    if (!checkbox || !checkbox.checked) continue;
+                    // Check if main variable is selected
+                    const mainCheckbox = block.querySelector(`input[data-var="${varId}"][data-type="main"]`);
+                    if (!mainCheckbox || !mainCheckbox.checked) continue;
                     
                     // Clone and prepare element for capture
                     const clone = block.cloneNode(true);
                     
-                    // Remove checkboxes from clone
-                    clone.querySelectorAll('.checkbox-label').forEach(el => el.remove());
+                    // Remove checkbox column from table
+                    const table = clone.querySelector('table');
+                    if (table) {
+                        // Remove header checkbox column
+                        const headerRow = table.querySelector('thead tr');
+                        if (headerRow) {
+                            headerRow.deleteCell(0);
+                        }
+                        
+                        // Remove checkbox cells from all data rows and remove unchecked rows
+                        const rows = Array.from(table.querySelectorAll('tbody tr'));
+                        rows.forEach((row, idx) => {
+                            const checkbox = row.querySelector('input[type="checkbox"]');
+                            
+                            // Check if this row should be included
+                            if (checkbox) {
+                                const originalCheckbox = block.querySelectorAll('tbody tr input[type="checkbox"]')[idx];
+                                if (!originalCheckbox.checked) {
+                                    row.remove();
+                                    return;
+                                }
+                            }
+                            
+                            // Remove checkbox cell
+                            row.deleteCell(0);
+                        });
+                    }
                     
                     // Force light background
                     clone.style.background = '#ffffff';
@@ -690,7 +734,6 @@
                     const clonedCanvas = clone.querySelector('canvas');
                     
                     if (originalCanvas && clonedCanvas) {
-                        // Get the chart context and redraw it on the cloned canvas
                         const ctx = clonedCanvas.getContext('2d');
                         clonedCanvas.width = originalCanvas.width;
                         clonedCanvas.height = originalCanvas.height;
