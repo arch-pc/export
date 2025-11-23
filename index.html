@@ -138,6 +138,20 @@
             align-items: center;
         }
         
+        .pdf-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: #7f8c8d;
+        }
+        
+        .pdf-checkbox input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
+        }
+        
         .tag {
             background: #e8f4f8;
             color: #2980b9;
@@ -153,15 +167,7 @@
         }
         
         .checkbox-label {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        
-        .checkbox-label input {
-            cursor: pointer;
+            display: none; /* Remove old style */
         }
         
         /* Horizontal data layout */
@@ -574,6 +580,9 @@
                         
                         html += `<div class="variable-block" data-variable="${varId}">`;
                         html += `<div class="variable-header">`;
+                        html += `<div class="pdf-checkbox">`;
+                        html += `<input type="checkbox" class="pdf-select" data-var="${varId}" checked>`;
+                        html += `</div>`;
                         html += `<div class="variable-name">${cleanName}</div>`;
                         html += `<div class="variable-meta">`;
                         
@@ -587,9 +596,6 @@
                             html += `<span class="unit">(${unit})</span>`;
                         }
                         
-                        html += `<label class="checkbox-label">`;
-                        html += `<input type="checkbox" class="pdf-select" data-var="${varId}" checked> PDF`;
-                        html += `</label>`;
                         html += `</div></div>`;
                         
                         // Combined table with main variable and subvariables
@@ -604,18 +610,8 @@
                         
                         html += `</div>`; // Close data-container
                         
-                        // Subvariables checkboxes (hidden but still functional for PDF)
-                        if (variable.subVariables && variable.subVariables.length > 0) {
-                            html += `<div style="margin-top: 10px; font-size: 11px;">`;
-                            html += `<strong>PDF selectie subvariabelen:</strong> `;
-                            variable.subVariables.forEach((subVar, subIdx) => {
-                                const subId = `${varId}-sub${subIdx}`;
-                                html += `<label class="checkbox-label" style="margin-left: 10px;">`;
-                                html += `<input type="checkbox" class="pdf-select" data-subvar="${subId}" checked> ${trimName(subVar.name)}`;
-                                html += `</label>`;
-                            });
-                            html += `</div>`;
-                        }
+                        // Remove old subvariable checkboxes section
+                        // Subvariables are now always included with main variable
                         
                         // Notes
                         if (variable.notes && variable.notes.trim()) {
@@ -672,18 +668,8 @@
                     // Clone and prepare element for capture
                     const clone = block.cloneNode(true);
                     
-                    // Remove unchecked subvariables
-                    const subVars = clone.querySelectorAll('.subvariable-block');
-                    subVars.forEach(subVar => {
-                        const subId = subVar.dataset.subvar;
-                        const subCheckbox = block.querySelector(`input[data-subvar="${subId}"]`);
-                        if (!subCheckbox || !subCheckbox.checked) {
-                            subVar.remove();
-                        }
-                    });
-                    
                     // Remove checkboxes from clone
-                    clone.querySelectorAll('.checkbox-label').forEach(el => el.remove());
+                    clone.querySelectorAll('.pdf-checkbox').forEach(el => el.remove());
                     
                     // Temporarily add to DOM for rendering
                     clone.style.position = 'absolute';
@@ -692,6 +678,9 @@
                     clone.style.background = 'white';
                     clone.style.padding = '20px';
                     document.body.appendChild(clone);
+                    
+                    // Wait a bit for charts to render in clone
+                    await new Promise(resolve => setTimeout(resolve, 100));
                     
                     // Capture with html2canvas
                     const canvas = await html2canvas(clone, {
