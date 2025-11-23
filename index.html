@@ -167,7 +167,7 @@
     th {
       background: #edf2f7;
       padding: 10px;
-      text-align: left;
+      text-align: center;
       font-weight: 600;
       border-bottom: 2px solid #cbd5e0;
     }
@@ -175,6 +175,14 @@
     td {
       padding: 10px;
       border-bottom: 1px solid #e2e8f0;
+      text-align: center;
+      vertical-align: top;
+    }
+    
+    td small {
+      font-size: 11px;
+      display: block;
+      margin-top: 4px;
     }
     
     tr:hover {
@@ -376,19 +384,35 @@
     function createTable(data, weeks, unit = '') {
       const deltas = calculateDeltas(data, weeks);
       
-      let html = '<table><thead><tr><th>Week</th><th>Waarde</th><th>Delta</th></tr></thead><tbody>';
+      let html = '<table><thead><tr>';
       
+      // Header row with weeks
+      for (const week of weeks) {
+        html += `<th>${week}</th>`;
+      }
+      html += '</tr></thead><tbody><tr>';
+      
+      // Data row with values and deltas
       for (const week of weeks) {
         const value = data[week];
-        const displayValue = value !== null && value !== undefined 
-          ? value + (unit ? ' ' + unit : '') 
-          : '<span class="null-value">–</span>';
-        const delta = formatDelta(deltas[week]);
+        let displayValue = '';
         
-        html += `<tr><td>${week}</td><td>${displayValue}</td><td>${delta}</td></tr>`;
+        if (value !== null && value !== undefined) {
+          displayValue = value + (unit ? ' ' + unit : '');
+          const delta = deltas[week];
+          if (delta !== undefined && delta !== null) {
+            const sign = delta >= 0 ? '+' : '';
+            const deltaClass = delta >= 0 ? 'delta-positive' : 'delta-negative';
+            displayValue += `<br><small class="${deltaClass}">${sign}${delta}</small>`;
+          }
+        } else {
+          displayValue = '<span class="null-value">–</span>';
+        }
+        
+        html += `<td>${displayValue}</td>`;
       }
       
-      html += '</tbody></table>';
+      html += '</tr></tbody></table>';
       return html;
     }
     
