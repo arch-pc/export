@@ -590,9 +590,10 @@
                         
                         html += `<div class="variable-block" data-variable="${varId}">`;
                         html += `<div class="variable-header">`;
-                        html += `<div class="pdf-checkbox">`;
+                        html += `<label class="checkbox-label">`;
                         html += `<input type="checkbox" class="pdf-select" data-var="${varId}" checked>`;
-                        html += `</div>`;
+                        html += `<span>PDF</span>`;
+                        html += `</label>`;
                         html += `<div class="variable-name">${cleanName}</div>`;
                         html += `<div class="variable-meta">`;
                         
@@ -679,7 +680,7 @@
                     const clone = block.cloneNode(true);
                     
                     // Remove checkboxes from clone
-                    clone.querySelectorAll('.pdf-checkbox').forEach(el => el.remove());
+                    clone.querySelectorAll('.checkbox-label').forEach(el => el.remove());
                     
                     // Force light background
                     clone.style.background = '#ffffff';
