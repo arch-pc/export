@@ -3,924 +3,848 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytics Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Metrics Dashboard</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
     <style>
+        /* --- Root Variables --- */
         :root {
-            --primary-color: #4a6fa5;
-            --secondary-color: #6b8cbc;
-            --accent-color: #ff6b6b;
-            --light-color: #f8f9fa;
-            --dark-color: #343a40;
-            --border-color: #dee2e6;
-            --success-color: #28a745;
-            --warning-color: #ffc107;
-            --danger-color: #dc3545;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --border-radius: 8px;
-            --spacing-sm: 0.5rem;
-            --spacing-md: 1rem;
-            --spacing-lg: 1.5rem;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --border-color: #e0e0e0;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            --primary-color: #007bff;
+            --text-color: #333;
+            --text-light: #666;
+            --delta-positive: #28a745;
+            --delta-negative: #dc3545;
+            --note-bg: #fffbef;
+            --note-border: #ffeeba;
         }
 
-        * {
-            box-sizing: border-box;
+        /* --- Base & Layout --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             margin: 0;
             padding: 0;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             line-height: 1.6;
-            color: var(--dark-color);
-            background-color: #f5f7fa;
-            padding: var(--spacing-md);
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
+        main {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 20px;
         }
 
+        /* --- Header & Controls --- */
         header {
-            text-align: center;
-            margin-bottom: var(--spacing-lg);
-            padding: var(--spacing-md);
-            background-color: white;
-            border-radius: var(--border-radius);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: var(--card-bg);
+            border-radius: 8px;
             box-shadow: var(--shadow);
         }
 
-        h1 {
+        header h1 {
+            margin: 0;
+            font-size: 1.8em;
             color: var(--primary-color);
-            margin-bottom: var(--spacing-md);
-        }
-
-        .upload-section {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: var(--spacing-md);
-            margin-bottom: var(--spacing-lg);
-        }
-
-        .file-input-wrapper {
-            position: relative;
-            display: inline-block;
-            width: 100%;
-            max-width: 400px;
-        }
-
-        .file-input {
-            width: 100%;
-            padding: var(--spacing-md);
-            border: 2px dashed var(--border-color);
-            border-radius: var(--border-radius);
-            background-color: var(--light-color);
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .file-input:hover {
-            border-color: var(--primary-color);
-            background-color: #e9ecef;
-        }
-
-        .file-input input {
-            display: none;
         }
 
         .controls {
             display: flex;
-            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
             align-items: center;
-            margin-bottom: var(--spacing-lg);
-            padding: var(--spacing-md);
-            background-color: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
         }
 
-        .checkbox-controls {
-            display: flex;
-            gap: var(--spacing-md);
-        }
-
-        .btn {
-            padding: 0.75rem 1.5rem;
+        button,
+        input[type="file"]::file-selector-button {
+            padding: 10px 15px;
             border: none;
-            border-radius: var(--border-radius);
-            background-color: var(--primary-color);
+            border-radius: 5px;
+            background: var(--primary-color);
             color: white;
-            font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
         }
 
-        .btn:hover {
-            background-color: var(--secondary-color);
+        button:hover,
+        input[type="file"]::file-selector-button:hover {
+            background-color: #0056b3;
         }
 
-        .btn-export {
-            background-color: var(--accent-color);
+        button.secondary {
+            background-color: #6c757d;
+        }
+        button.secondary:hover {
+            background-color: #5a6268;
         }
 
-        .btn-export:hover {
-            background-color: #ff5252;
+        input[type="file"] {
+            font-size: 14px;
         }
 
-        .error-message {
-            color: var(--danger-color);
-            background-color: #f8d7da;
+        #error-message {
+            color: var(--delta-negative);
+            background: #f8d7da;
             border: 1px solid #f5c6cb;
-            border-radius: var(--border-radius);
-            padding: var(--spacing-md);
-            margin-bottom: var(--spacing-lg);
+            padding: 10px 15px;
+            border-radius: 5px;
             display: none;
+            width: 100%;
+            margin-top: 10px;
+            box-sizing: border-box;
+        }
+        
+        #pdf-status {
+            display: none;
+            font-weight: 500;
+            color: var(--primary-color);
         }
 
-        .dashboard {
+        /* --- Dashboard Content --- */
+        #dashboard-content {
             display: grid;
-            gap: var(--spacing-lg);
+            gap: 30px;
         }
 
-        .category {
-            background-color: white;
-            border-radius: var(--border-radius);
+        .category-container {
+            background: var(--card-bg);
+            border-radius: 8px;
             box-shadow: var(--shadow);
-            overflow: hidden;
-        }
-
-        .category-header {
-            background-color: var(--primary-color);
-            color: white;
-            padding: var(--spacing-md);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            padding: 25px 30px;
+            /* Hint for PDF generator to avoid breaking inside */
+            page-break-inside: avoid;
         }
 
         .category-title {
-            font-size: 1.5rem;
-            font-weight: 600;
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--text-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-top: 0;
+            margin-bottom: 25px;
+            letter-spacing: 0.5px;
         }
 
-        .category-checkbox {
-            transform: scale(1.2);
-        }
-
-        .variables-container {
-            padding: var(--spacing-md);
-        }
-
-        .variable {
-            margin-bottom: var(--spacing-lg);
-            padding: var(--spacing-md);
+        .variable-container {
             border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
-            background-color: var(--light-color);
+            border-radius: 8px;
+            margin-bottom: 25px;
+            overflow: hidden;
+            page-break-inside: avoid;
+            transition: opacity 0.3s ease;
         }
 
         .variable-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: var(--spacing-md);
+            flex-wrap: wrap;
+            gap: 10px;
+            background: #fdfdfd;
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
         }
 
-        .variable-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--primary-color);
-        }
-
-        .variable-meta {
+        .variable-header-left {
             display: flex;
             align-items: center;
-            gap: var(--spacing-md);
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
-        .tags {
+        .variable-name {
+            font-size: 1.5em;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .variable-tags {
             display: flex;
-            gap: var(--spacing-sm);
+            gap: 6px;
         }
 
         .tag {
-            background-color: var(--secondary-color);
-            color: white;
-            padding: 0.25rem 0.5rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
+            font-size: 0.75em;
+            font-weight: 500;
+            background: #e0e0e0;
+            color: var(--text-light);
+            padding: 3px 8px;
+            border-radius: 10px;
+            text-transform: uppercase;
+        }
+        
+        .pdf-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.9em;
+            color: var(--text-light);
+            cursor: pointer;
+        }
+        
+        .pdf-toggle label {
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .pdf-toggle input[type="checkbox"] {
+            cursor: pointer;
         }
 
-        .unit {
-            font-style: italic;
-            color: #6c757d;
-        }
-
+        /* --- Data Table --- */
         .data-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: var(--spacing-md);
         }
 
         .data-table th,
         .data-table td {
-            padding: 0.75rem;
-            text-align: center;
-            border: 1px solid var(--border-color);
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+            font-size: 0.95em;
+        }
+        
+        .data-table th:first-child,
+        .data-table td:first-child {
+            padding-left: 20px;
+            width: 30%; /* Give more space to metric names */
+        }
+        
+        .data-table th:not(:first-child),
+        .data-table td:not(:first-child) {
+            text-align: right;
+            padding-right: 20px;
         }
 
         .data-table th {
-            background-color: #e9ecef;
+            background: #fcfcfc;
             font-weight: 600;
+            color: var(--text-light);
+            font-size: 0.9em;
         }
 
-        .delta-positive {
-            color: var(--success-color);
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .main-variable-row td {
             font-weight: 600;
+            font-size: 1.05em;
+        }
+        
+        .sub-variable-row {
+            background-color: #fdfdfd;
+            transition: opacity 0.3s ease;
+        }
+        .sub-variable-row td:first-child {
+            padding-left: 30px; /* Indent sub-variables */
         }
 
-        .delta-negative {
-            color: var(--danger-color);
-            font-weight: 600;
+        .delta {
+            font-size: 0.9em;
+            margin-left: 8px;
+            font-weight: 500;
         }
 
-        .delta-neutral {
-            color: #6c757d;
+        .delta-pos {
+            color: var(--delta-positive);
         }
 
-        .subvariables {
-            margin-top: var(--spacing-md);
-            padding-left: var(--spacing-md);
+        .delta-neg {
+            color: var(--delta-negative);
         }
 
-        .subvariable {
-            margin-bottom: var(--spacing-md);
-            padding: var(--spacing-md);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
-            background-color: white;
-        }
-
-        .subvariable-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: var(--spacing-sm);
-        }
-
-        .subvariable-title {
-            font-weight: 600;
-            color: var(--dark-color);
-        }
-
-        .chart-container {
-            margin-top: var(--spacing-md);
-            height: 300px;
-            position: relative;
-        }
-
-        .notes {
-            margin-top: var(--spacing-md);
-            padding: var(--spacing-md);
-            background-color: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: var(--border-radius);
+        .no-data {
+            color: var(--text-light);
             font-style: italic;
         }
 
+        /* --- Chart & Notes --- */
+        .chart-container {
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+            background: #fcfcfc;
+        }
+        
+        .chart-container canvas {
+            max-height: 300px;
+        }
+
+        .notes-container {
+            background: var(--note-bg);
+            border-top: 1px solid var(--note-border);
+            padding: 15px 20px;
+        }
+
         .notes-title {
-            font-weight: 600;
-            margin-bottom: var(--spacing-sm);
+            font-weight: bold;
+            margin: 0 0 5px 0;
             color: #856404;
         }
-
-        .hidden {
-            display: none;
+        
+        .notes-content {
+            margin: 0;
+            font-size: 0.95em;
         }
 
-        @media (max-width: 768px) {
-            .controls {
-                flex-direction: column;
-                gap: var(--spacing-md);
-            }
-            
-            .variable-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: var(--spacing-sm);
-            }
-            
-            .variable-meta {
-                flex-wrap: wrap;
-            }
+        /* --- PDF Generation Styling --- */
+        
+        /* This class is added to the body during PDF export */
+        body.prep-for-pdf {
+            background-color: var(--card-bg);
         }
 
-        @media print {
-            body {
-                background-color: white;
-                padding: 0;
-            }
-            
-            .upload-section,
-            .controls,
-            .error-message {
-                display: none;
-            }
-            
-            .category {
-                box-shadow: none;
-                border: 1px solid var(--border-color);
-                page-break-inside: avoid;
-            }
+        body.prep-for-pdf main {
+            max-width: none;
+            margin: 0;
+            padding: 10px;
         }
+        
+        body.prep-for-pdf header,
+        body.prep-for-pdf .pdf-toggle {
+            /* Hide all controls and checkboxes */
+            display: none !important;
+        }
+        
+        body.prep-for-pdf #dashboard-content {
+            /* Use block flow for continuous page */
+            display: block;
+            gap: 0;
+        }
+        
+        body.prep-for-pdf .category-container,
+        body.prep-for-pdf .variable-container {
+            box-shadow: none;
+            border: 1px solid #ccc;
+        }
+        
+        body.prep-for-pdf .category-container {
+            padding: 20px;
+        }
+        
+        body.prep-for-pdf .chart-container canvas {
+            max-height: 400px; /* Allow more height for PDF */
+        }
+        
+        /* This class is toggled by JS to hide elements from PDF */
+        .pdf-hidden {
+            display: none !important;
+            opacity: 0.3; /* For screen view */
+        }
+        
+        /* On screen, fade out hidden items instead of removing them */
+        .variable-container.pdf-hidden,
+        .sub-variable-row.pdf-hidden {
+            display: block !important; /* Keep it in the layout */
+            opacity: 0.3;
+        }
+        
+        /* But when prepping for PDF, *really* hide them */
+        body.prep-for-pdf .variable-container.pdf-hidden,
+        body.prep-for-pdf .sub-variable-row.pdf-hidden {
+            display: none !important;
+        }
+        
     </style>
 </head>
 <body>
-    <div class="container">
+    <main>
         <header>
-            <h1>Analytics Dashboard</h1>
-            <div class="upload-section">
-                <div class="file-input-wrapper">
-                    <div class="file-input" id="fileInputLabel">
-                        <span>Click to upload JSON file</span>
-                        <input type="file" id="fileInput" accept="application/json">
-                    </div>
-                </div>
+            <h1>Metrics Dashboard</h1>
+            <div class="controls">
+                <input type="file" id="json-upload" accept="application/json">
+                <button id="select-all">Select All</button>
+                <button id="deselect-all" class="secondary">Deselect All</button>
+                <button id="export-pdf">Export to PDF</button>
+                <div id="pdf-status">Generating PDF...</div>
             </div>
+            <div id="error-message"></div>
         </header>
 
-        <div class="error-message" id="errorMessage"></div>
-
-        <div class="controls">
-            <div class="checkbox-controls">
-                <button class="btn" id="selectAllBtn">Select All</button>
-                <button class="btn" id="deselectAllBtn">Deselect All</button>
+        <div id="dashboard-content">
             </div>
-            <button class="btn btn-export" id="exportPdfBtn">Export to PDF</button>
-        </div>
-
-        <div class="dashboard" id="dashboard"></div>
-    </div>
+    </main>
 
     <script>
-        // Global variables
-        let chartInstances = [];
-        let jsonData = null;
+        document.addEventListener("DOMContentLoaded", () => {
+            // --- DOM Elements ---
+            const uploadInput = document.getElementById("json-upload");
+            const exportButton = document.getElementById("export-pdf");
+            const selectAllButton = document.getElementById("select-all");
+            const deselectAllButton = document.getElementById("deselect-all");
+            const contentDiv = document.getElementById("dashboard-content");
+            const errorDiv = document.getElementById("error-message");
+            const statusDiv = document.getElementById("pdf-status");
+            
+            // To store Chart.js instances for later destruction
+            let chartInstances = {};
+            // To store all week labels in order
+            let globalWeekLabels = [];
 
-        // DOM elements
-        const fileInput = document.getElementById('fileInput');
-        const fileInputLabel = document.getElementById('fileInputLabel');
-        const errorMessage = document.getElementById('errorMessage');
-        const dashboard = document.getElementById('dashboard');
-        const selectAllBtn = document.getElementById('selectAllBtn');
-        const deselectAllBtn = document.getElementById('deselectAllBtn');
-        const exportPdfBtn = document.getElementById('exportPdfBtn');
+            // --- Event Listeners ---
+            uploadInput.addEventListener("change", handleFileUpload);
+            exportButton.addEventListener("click", generatePDF);
+            selectAllButton.addEventListener("click", () => toggleAllCheckboxes(true));
+            deselectAllButton.addEventListener("click", () => toggleAllCheckboxes(false));
 
-        // Event listeners
-        fileInput.addEventListener('change', handleFileUpload);
-        fileInputLabel.addEventListener('click', () => fileInput.click());
-        selectAllBtn.addEventListener('click', selectAllCheckboxes);
-        deselectAllBtn.addEventListener('click', deselectAllCheckboxes);
-        exportPdfBtn.addEventListener('click', exportToPdf);
+            /**
+             * Handles the file upload event.
+             */
+            function handleFileUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
 
-        // File upload handler
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    jsonData = JSON.parse(e.target.result);
-                    errorMessage.style.display = 'none';
-                    renderDashboard();
-                    fileInputLabel.textContent = file.name;
-                } catch (error) {
-                    showError('Invalid JSON file. Please check the file format.');
-                    console.error('Error parsing JSON:', error);
-                }
-            };
-            reader.onerror = function() {
-                showError('Error reading file. Please try again.');
-            };
-            reader.readAsText(file);
-        }
-
-        // Error display function
-        function showError(message) {
-            errorMessage.textContent = message;
-            errorMessage.style.display = 'block';
-            dashboard.innerHTML = '';
-            jsonData = null;
-        }
-
-        // Render the entire dashboard
-        function renderDashboard() {
-            dashboard.innerHTML = '';
-            chartInstances = [];
-
-            if (!jsonData) return;
-
-            // Create containers for each category
-            Object.keys(jsonData).forEach(categoryName => {
-                const category = jsonData[categoryName];
-                const categoryElement = createCategoryElement(categoryName, category);
-                dashboard.appendChild(categoryElement);
-            });
-        }
-
-        // Create a category element
-        function createCategoryElement(categoryName, category) {
-            const categoryDiv = document.createElement('div');
-            categoryDiv.className = 'category';
-            categoryDiv.id = `category-${categoryName}`;
-
-            // Category header
-            const categoryHeader = document.createElement('div');
-            categoryHeader.className = 'category-header';
-            
-            const categoryTitle = document.createElement('h2');
-            categoryTitle.className = 'category-title';
-            categoryTitle.textContent = categoryName;
-            
-            const categoryCheckbox = document.createElement('input');
-            categoryCheckbox.type = 'checkbox';
-            categoryCheckbox.className = 'category-checkbox';
-            categoryCheckbox.checked = true;
-            categoryCheckbox.addEventListener('change', function() {
-                const variablesContainer = categoryDiv.querySelector('.variables-container');
-                const checkboxes = variablesContainer.querySelectorAll('input[type="checkbox"]');
-                checkboxes.forEach(checkbox => {
-                    checkbox.checked = this.checked;
-                });
-            });
-            
-            categoryHeader.appendChild(categoryTitle);
-            categoryHeader.appendChild(categoryCheckbox);
-            categoryDiv.appendChild(categoryHeader);
-
-            // Variables container
-            const variablesContainer = document.createElement('div');
-            variablesContainer.className = 'variables-container';
-
-            // Create elements for each variable
-            category.variables.forEach(variable => {
-                const variableElement = createVariableElement(variable);
-                variablesContainer.appendChild(variableElement);
-            });
-
-            categoryDiv.appendChild(variablesContainer);
-            return categoryDiv;
-        }
-
-        // Create a variable element
-        function createVariableElement(variable) {
-            const variableDiv = document.createElement('div');
-            variableDiv.className = 'variable';
-
-            // Variable header
-            const variableHeader = document.createElement('div');
-            variableHeader.className = 'variable-header';
-            
-            const variableTitle = document.createElement('h3');
-            variableTitle.className = 'variable-title';
-            variableTitle.textContent = variable.name.trim();
-            
-            const variableMeta = document.createElement('div');
-            variableMeta.className = 'variable-meta';
-            
-            // Tags
-            if (variable.tags && variable.tags.length > 0) {
-                const tagsContainer = document.createElement('div');
-                tagsContainer.className = 'tags';
-                
-                variable.tags.forEach(tag => {
-                    const tagElement = document.createElement('span');
-                    tagElement.className = 'tag';
-                    tagElement.textContent = tag;
-                    tagsContainer.appendChild(tagElement);
-                });
-                
-                variableMeta.appendChild(tagsContainer);
-            }
-            
-            // Unit
-            if (variable.unit) {
-                const unitElement = document.createElement('span');
-                unitElement.className = 'unit';
-                unitElement.textContent = variable.unit;
-                variableMeta.appendChild(unitElement);
-            }
-            
-            // Checkbox
-            const variableCheckbox = document.createElement('input');
-            variableCheckbox.type = 'checkbox';
-            variableCheckbox.className = 'variable-checkbox';
-            variableCheckbox.checked = true;
-            variableCheckbox.dataset.type = 'variable';
-            variableMeta.appendChild(variableCheckbox);
-            
-            variableHeader.appendChild(variableTitle);
-            variableHeader.appendChild(variableMeta);
-            variableDiv.appendChild(variableHeader);
-
-            // Data table
-            const tableElement = createDataTable(variable.data, variable.unit);
-            variableDiv.appendChild(tableElement);
-
-            // Subvariables
-            if (variable.subVariables && variable.subVariables.length > 0) {
-                const subvariablesContainer = document.createElement('div');
-                subvariablesContainer.className = 'subvariables';
-                
-                variable.subVariables.forEach(subVariable => {
-                    const subVariableElement = createSubVariableElement(subVariable, variable.unit);
-                    subvariablesContainer.appendChild(subVariableElement);
-                });
-                
-                variableDiv.appendChild(subvariablesContainer);
-            }
-
-            // Chart
-            const chartContainer = document.createElement('div');
-            chartContainer.className = 'chart-container';
-            const canvas = document.createElement('canvas');
-            chartContainer.appendChild(canvas);
-            variableDiv.appendChild(chartContainer);
-
-            // Notes
-            if (variable.notes && variable.notes.trim() !== '') {
-                const notesElement = document.createElement('div');
-                notesElement.className = 'notes';
-                
-                const notesTitle = document.createElement('div');
-                notesTitle.className = 'notes-title';
-                notesTitle.textContent = 'Notes:';
-                
-                const notesContent = document.createElement('div');
-                notesContent.textContent = variable.notes.trim();
-                
-                notesElement.appendChild(notesTitle);
-                notesElement.appendChild(notesContent);
-                variableDiv.appendChild(notesElement);
-            }
-
-            // Render chart after the element is added to DOM
-            setTimeout(() => {
-                renderChart(canvas, variable);
-            }, 100);
-
-            return variableDiv;
-        }
-
-        // Create a subvariable element
-        function createSubVariableElement(subVariable, unit) {
-            const subVariableDiv = document.createElement('div');
-            subVariableDiv.className = 'subvariable';
-
-            // Subvariable header
-            const subVariableHeader = document.createElement('div');
-            subVariableHeader.className = 'subvariable-header';
-            
-            const subVariableTitle = document.createElement('h4');
-            subVariableTitle.className = 'subvariable-title';
-            subVariableTitle.textContent = subVariable.name;
-            
-            const subVariableCheckbox = document.createElement('input');
-            subVariableCheckbox.type = 'checkbox';
-            subVariableCheckbox.className = 'subvariable-checkbox';
-            subVariableCheckbox.checked = true;
-            subVariableCheckbox.dataset.type = 'subvariable';
-            
-            subVariableHeader.appendChild(subVariableTitle);
-            subVariableHeader.appendChild(subVariableCheckbox);
-            subVariableDiv.appendChild(subVariableHeader);
-
-            // Data table
-            const tableElement = createDataTable(subVariable.data, unit);
-            subVariableDiv.appendChild(tableElement);
-
-            return subVariableDiv;
-        }
-
-        // Create a data table with weeks and deltas
-        function createDataTable(data, unit) {
-            const table = document.createElement('table');
-            table.className = 'data-table';
-            
-            // Get week labels
-            const weeks = Object.keys(data);
-            if (weeks.length === 0) return table;
-            
-            // Create table header
-            const thead = document.createElement('thead');
-            const headerRow = document.createElement('tr');
-            
-            const weekHeader = document.createElement('th');
-            weekHeader.textContent = 'Week';
-            headerRow.appendChild(weekHeader);
-            
-            weeks.forEach(week => {
-                const th = document.createElement('th');
-                th.textContent = week;
-                headerRow.appendChild(th);
-            });
-            
-            const deltaHeader = document.createElement('th');
-            deltaHeader.textContent = 'Δ';
-            headerRow.appendChild(deltaHeader);
-            
-            thead.appendChild(headerRow);
-            table.appendChild(thead);
-            
-            // Create table body
-            const tbody = document.createElement('tbody');
-            const dataRow = document.createElement('tr');
-            
-            const valueCell = document.createElement('td');
-            valueCell.textContent = 'Value';
-            valueCell.style.fontWeight = '600';
-            dataRow.appendChild(valueCell);
-            
-            // Calculate deltas
-            const deltas = calculateDeltas(data);
-            
-            // Add data cells
-            weeks.forEach(week => {
-                const td = document.createElement('td');
-                const value = data[week];
-                
-                if (value === null || value === undefined) {
-                    td.textContent = '–';
-                } else {
-                    td.textContent = unit === '%' ? `${value}%` : value;
-                }
-                
-                dataRow.appendChild(td);
-            });
-            
-            // Add delta cell
-            const deltaCell = document.createElement('td');
-            deltaCell.textContent = '–';
-            dataRow.appendChild(deltaCell);
-            
-            tbody.appendChild(dataRow);
-            
-            // Add delta row
-            const deltaRow = document.createElement('tr');
-            
-            const deltaLabelCell = document.createElement('td');
-            deltaLabelCell.textContent = 'Change';
-            deltaLabelCell.style.fontWeight = '600';
-            deltaRow.appendChild(deltaLabelCell);
-            
-            weeks.forEach(week => {
-                const td = document.createElement('td');
-                const delta = deltas[week];
-                
-                if (delta === null || delta === undefined) {
-                    td.textContent = '–';
-                    td.className = 'delta-neutral';
-                } else if (delta > 0) {
-                    td.textContent = `+${delta}`;
-                    td.className = 'delta-positive';
-                } else if (delta < 0) {
-                    td.textContent = delta;
-                    td.className = 'delta-negative';
-                } else {
-                    td.textContent = '0';
-                    td.className = 'delta-neutral';
-                }
-                
-                deltaRow.appendChild(td);
-            });
-            
-            const emptyDeltaCell = document.createElement('td');
-            emptyDeltaCell.textContent = '–';
-            deltaRow.appendChild(emptyDeltaCell);
-            
-            tbody.appendChild(deltaRow);
-            table.appendChild(tbody);
-            
-            return table;
-        }
-
-        // Calculate deltas between weeks
-        function calculateDeltas(data) {
-            const weeks = Object.keys(data);
-            const deltas = {};
-            let prevValue = null;
-            
-            weeks.forEach(week => {
-                const currentValue = data[week];
-                
-                if (currentValue === null || currentValue === undefined) {
-                    deltas[week] = null;
-                } else if (prevValue === null) {
-                    deltas[week] = null;
-                    prevValue = currentValue;
-                } else {
-                    deltas[week] = currentValue - prevValue;
-                    prevValue = currentValue;
-                }
-            });
-            
-            return deltas;
-        }
-
-        // Render chart for a variable
-        function renderChart(canvas, variable) {
-            const weeks = Object.keys(variable.data);
-            const datasets = [];
-            
-            // Add main variable dataset
-            const mainData = weeks.map(week => variable.data[week]);
-            datasets.push({
-                label: variable.name.trim(),
-                data: mainData,
-                borderColor: '#4a6fa5',
-                backgroundColor: 'rgba(74, 111, 165, 0.1)',
-                tension: 0.3,
-                fill: true
-            });
-            
-            // Add subvariable datasets
-            if (variable.subVariables && variable.subVariables.length > 0) {
-                const colors = ['#ff6b6b', '#51cf66', '#fcc419', '#ae3ec9', '#20c997'];
-                
-                variable.subVariables.forEach((subVariable, index) => {
-                    const subData = weeks.map(week => subVariable.data[week]);
-                    datasets.push({
-                        label: subVariable.name,
-                        data: subData,
-                        borderColor: colors[index % colors.length],
-                        backgroundColor: 'transparent',
-                        tension: 0.3,
-                        borderDash: [5, 5]
-                    });
-                });
-            }
-            
-            const chart = new Chart(canvas, {
-                type: 'line',
-                data: {
-                    labels: weeks,
-                    datasets: datasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                        },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        renderDashboard(data);
+                        errorDiv.style.display = "none";
+                    } catch (err) {
+                        showError(`Error parsing JSON file: ${err.message}`);
                     }
-                }
-            });
+                };
+                reader.onerror = () => {
+                    showError("Error reading the file.");
+                };
+                reader.readAsText(file);
+            }
             
-            chartInstances.push(chart);
-        }
-
-        // Select all checkboxes
-        function selectAllCheckboxes() {
-            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = true;
-            });
-        }
-
-        // Deselect all checkboxes
-        function deselectAllCheckboxes() {
-            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = false;
-            });
-        }
-
-        // Export to PDF
-        function exportToPdf() {
-            if (!jsonData) {
-                showError('No data to export. Please upload a JSON file first.');
-                return;
+            /**
+             * Displays an error message.
+             */
+            function showError(message) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = "block";
+                contentDiv.innerHTML = "";
+                destroyAllCharts();
             }
 
-            // Create a temporary container for PDF content
-            const pdfContainer = document.createElement('div');
-            pdfContainer.style.width = '100%';
-            pdfContainer.style.padding = '20px';
-            pdfContainer.style.backgroundColor = 'white';
-            
-            // Add title
-            const title = document.createElement('h1');
-            title.textContent = 'Analytics Report';
-            title.style.textAlign = 'center';
-            title.style.marginBottom = '20px';
-            title.style.color = '#4a6fa5';
-            pdfContainer.appendChild(title);
-            
-            // Add date
-            const date = document.createElement('p');
-            date.textContent = `Generated on: ${new Date().toLocaleDateString()}`;
-            date.style.textAlign = 'center';
-            date.style.marginBottom = '30px';
-            date.style.color = '#6c757d';
-            pdfContainer.appendChild(date);
-            
-            // Clone selected categories, variables, and subvariables
-            Object.keys(jsonData).forEach(categoryName => {
-                const categoryElement = document.getElementById(`category-${categoryName}`);
-                if (!categoryElement) return;
+            /**
+             * Destroys all active Chart.js instances.
+             */
+            function destroyAllCharts() {
+                Object.values(chartInstances).forEach((chart) => chart.destroy());
+                chartInstances = {};
+            }
+
+            /**
+             * Renders the entire dashboard from the parsed JSON data.
+             */
+            function renderDashboard(data) {
+                contentDiv.innerHTML = "";
+                destroyAllCharts();
                 
-                const categoryClone = categoryElement.cloneNode(true);
-                
-                // Remove checkboxes from the clone
-                const checkboxes = categoryClone.querySelectorAll('input[type="checkbox"]');
-                checkboxes.forEach(checkbox => checkbox.remove());
-                
-                // Remove charts (they will be recreated as images)
-                const chartContainers = categoryClone.querySelectorAll('.chart-container');
-                chartContainers.forEach(container => {
-                    // Replace canvas with image if available
-                    const canvas = container.querySelector('canvas');
-                    if (canvas && canvas.chart) {
-                        const image = new Image();
-                        image.src = canvas.toDataURL();
-                        image.style.maxWidth = '100%';
-                        container.innerHTML = '';
-                        container.appendChild(image);
-                    }
-                });
-                
-                // Filter out unchecked variables and subvariables
-                const variableElements = categoryClone.querySelectorAll('.variable');
-                variableElements.forEach(variableElement => {
-                    const variableCheckbox = categoryElement.querySelector(`.variable-checkbox[data-type="variable"]`);
-                    if (variableCheckbox && !variableCheckbox.checked) {
-                        variableElement.remove();
-                        return;
-                    }
+                // First, find all unique week labels from the *entire* dataset
+                globalWeekLabels = getWeekLabels(data);
+
+                for (const categoryName in data) {
+                    const category = data[categoryName];
+                    const categoryEl = document.createElement("div");
+                    categoryEl.className = "category-container";
                     
-                    // Filter subvariables
-                    const subvariableElements = variableElement.querySelectorAll('.subvariable');
-                    subvariableElements.forEach(subvariableElement => {
-                        const subvariableCheckbox = categoryElement.querySelector(`.subvariable-checkbox[data-type="subvariable"]`);
-                        if (subvariableCheckbox && !subvariableCheckbox.checked) {
-                            subvariableElement.remove();
+                    const titleEl = document.createElement("h2");
+                    titleEl.className = "category-title";
+                    titleEl.textContent = categoryName;
+                    categoryEl.appendChild(titleEl);
+
+                    category.variables.forEach((variable) => {
+                        categoryEl.appendChild(renderVariable(variable));
+                    });
+
+                    contentDiv.appendChild(categoryEl);
+                }
+            }
+            
+            /**
+             * Extracts and sorts all unique week labels from the data.
+             */
+            function getWeekLabels(data) {
+                const weekSet = new Set();
+                try {
+                    Object.values(data).forEach(category => {
+                        category.variables.forEach(variable => {
+                            if (variable.data) {
+                                Object.keys(variable.data).forEach(week => weekSet.add(week));
+                            }
+                            variable.subVariables.forEach(sub => {
+                                if (sub.data) {
+                                    Object.keys(sub.data).forEach(week => weekSet.add(week));
+                                }
+                            });
+                        });
+                    });
+                } catch(e) {
+                    console.error("Could not parse week labels.", e);
+                    showError("Data structure error: Could not find week labels.");
+                }
+                
+                // Sort by the number in "Week X"
+                return Array.from(weekSet).sort((a, b) => {
+                    const numA = parseInt(a.split(" ")[1] || 0);
+                    const numB = parseInt(b.split(" ")[1] || 0);
+                    return numA - numB;
+                });
+            }
+
+            /**
+             * Renders a single variable container (header, table, chart, notes).
+             */
+            function renderVariable(variable) {
+                const variableEl = document.createElement("div");
+                variableEl.className = "variable-container";
+                
+                const headerEl = document.createElement("div");
+                headerEl.className = "variable-header";
+
+                const headerLeft = document.createElement("div");
+                headerLeft.className = "variable-header-left";
+                
+                const nameEl = document.createElement("h3");
+                nameEl.className = "variable-name";
+                nameEl.textContent = variable.name.trim();
+                headerLeft.appendChild(nameEl);
+                
+                if (variable.tags && variable.tags.length > 0) {
+                    const tagsEl = document.createElement("div");
+                    tagsEl.className = "variable-tags";
+                    tagsEl.innerHTML = variable.tags.map(tag => `<span class="tag">${tag}</span>`).join("");
+                    headerLeft.appendChild(tagsEl);
+                }
+                
+                headerEl.appendChild(headerLeft);
+                
+                // Add "Include in PDF" checkbox for the whole variable block
+                const checkboxId = `check-var-${Math.random().toString(36).substring(2, 9)}`;
+                const toggleEl = document.createElement("div");
+                toggleEl.className = "pdf-toggle";
+                toggleEl.innerHTML = `
+                    <input type="checkbox" id="${checkboxId}" class="pdf-select-main" checked>
+                    <label for="${checkboxId}">Include in PDF</label>
+                `;
+                
+                toggleEl.querySelector("input").addEventListener("change", (e) => {
+                    // On screen, toggle opacity. In PDF, this class will hide it.
+                    variableEl.classList.toggle("pdf-hidden", !e.target.checked);
+                });
+                
+                headerEl.appendChild(toggleEl);
+                variableEl.appendChild(headerEl);
+                
+                // --- Create Data Table ---
+                const tableEl = document.createElement("table");
+                tableEl.className = "data-table";
+                
+                const thead = document.createElement("thead");
+                thead.innerHTML = `
+                    <tr>
+                        <th>Metric</th>
+                        ${globalWeekLabels.map(week => `<th>${week}</th>`).join("")}
+                    </tr>
+                `;
+                tableEl.appendChild(thead);
+                
+                const tbody = document.createElement("tbody");
+                
+                // Render Main Variable Row
+                tbody.appendChild(renderDataRow(variable, "main", variable.unit));
+                
+                // Render Sub-Variable Rows
+                if (variable.subVariables && variable.subVariables.length > 0) {
+                    variable.subVariables.forEach(subVar => {
+                         tbody.appendChild(renderDataRow(subVar, "sub", variable.unit));
+                    });
+                }
+                
+                tableEl.appendChild(tbody);
+                variableEl.appendChild(tableEl);
+                
+                // --- Create Chart ---
+                const chartContainer = document.createElement("div");
+                chartContainer.className = "chart-container";
+                const canvas = document.createElement("canvas");
+                const canvasId = `chart-${Math.random().toString(36).substring(2, 9)}`;
+                canvas.id = canvasId;
+                chartContainer.appendChild(canvas);
+                variableEl.appendChild(chartContainer);
+                
+                // Render the chart
+                renderChart(canvasId, variable);
+                
+                // --- Create Notes ---
+                if (variable.notes && variable.notes.trim() !== "") {
+                    const notesEl = document.createElement("div");
+                    notesEl.className = "notes-container";
+                    notesEl.innerHTML = `
+                        <h4 class="notes-title">Remarks</h4>
+                        <p class="notes-content">${variable.notes}</p>
+                    `;
+                    variableEl.appendChild(notesEl);
+                }
+
+                return variableEl;
+            }
+            
+            /**
+             * Renders a single <tr> for a metric (main or sub).
+             */
+            function renderDataRow(item, type, parentUnit = '') {
+                const tr = document.createElement("tr");
+                const unit = item.unit || parentUnit || '';
+                
+                let nameCellHtml = "";
+                if (type === "main") {
+                    tr.className = "main-variable-row";
+                    nameCellHtml = `<strong>${item.name.trim()}</strong>`;
+                    if (unit) {
+                         nameCellHtml += ` <span class="variable-unit">(${unit})</span>`;
+                    }
+                } else {
+                    tr.className = "sub-variable-row";
+                    const checkboxId = `check-sub-${Math.random().toString(36).substring(2, 9)}`;
+                    // Add checkbox for sub-variable
+                    nameCellHtml = `
+                        <div class="pdf-toggle">
+                            <input type="checkbox" id="${checkboxId}" class="pdf-select-sub" checked>
+                            <label for="${checkboxId}">${item.name.trim()}</label>
+                        </div>
+                    `;
+                    
+                    // Add event listener to this specific row's checkbox
+                    tr.addEventListener("change", (e) => {
+                        if (e.target.classList.contains("pdf-select-sub")) {
+                            tr.classList.toggle("pdf-hidden", !e.target.checked);
                         }
+                    });
+                }
+
+                tr.innerHTML = `<td>${nameCellHtml}</td>`;
+                
+                let prevValue = null;
+                
+                for (const week of globalWeekLabels) {
+                    const td = document.createElement("td");
+                    const value = item.data[week];
+                    
+                    if (value === null || value === undefined) {
+                        td.innerHTML = `<span class="no-data">–</span>`;
+                    } else {
+                        const formattedValue = value.toLocaleString("en-US");
+                        let deltaHtml = "";
+                        
+                        // Calculate delta vs. *previous non-null* value
+                        if (prevValue !== null) {
+                            const delta = value - prevValue;
+                            deltaHtml = formatDelta(delta, unit);
+                        }
+                        
+                        td.innerHTML = `<strong>${formattedValue}${unit === '%' ? '%' : ''}</strong>${deltaHtml}`;
+                        
+                        // Update prevValue only if current value is numeric
+                        prevValue = value;
+                    }
+                    tr.appendChild(td);
+                }
+                
+                return tr;
+            }
+            
+            /**
+             * Helper to format the delta value with sign and color.
+             */
+            function formatDelta(delta, unit) {
+                if (delta === 0) {
+                    return ` <span class="delta">(0)</span>`;
+                }
+                
+                const sign = delta > 0 ? '+' : '';
+                const className = delta > 0 ? 'delta-pos' : 'delta-neg';
+                const formattedDelta = delta.toLocaleString("en-US");
+                
+                return ` <span class="delta ${className}">(${sign}${formattedDelta}${unit === '%' ? '%' : ''})</span>`;
+            }
+
+            /**
+             * Renders a chart for a given variable and its sub-variables.
+             */
+            function renderChart(canvasId, variable) {
+                const ctx = document.getElementById(canvasId).getContext("2d");
+                
+                const datasets = [];
+                const colors = [
+                    '#007bff', '#28a745', '#dc3545', '#ffc107', 
+                    '#17a2b8', '#6f42c1', '#fd7e14', '#20c997'
+                ];
+                
+                // Main variable dataset
+                datasets.push({
+                    label: variable.name.trim(),
+                    data: globalWeekLabels.map(week => variable.data[week] ?? null),
+                    borderColor: colors[0],
+                    backgroundColor: colors[0] + '33', // 20% opacity
+                    fill: false,
+                    tension: 0.1,
+                    borderWidth: 3
+                });
+                
+                // Sub-variable datasets
+                variable.subVariables.forEach((sub, index) => {
+                    const color = colors[(index + 1) % colors.length];
+                    datasets.push({
+                        label: sub.name.trim(),
+                        data: globalWeekLabels.map(week => sub.data[week] ?? null),
+                        borderColor: color,
+                        backgroundColor: color + '33',
+                        fill: false,
+                        tension: 0.1,
+                        borderWidth: 2,
+                        borderDash: [5, 5] // Dotted line for sub-vars
                     });
                 });
                 
-                // Only add category if it has content
-                if (categoryClone.querySelector('.variable')) {
-                    pdfContainer.appendChild(categoryClone);
+                const config = {
+                    type: 'line',
+                    data: {
+                        labels: globalWeekLabels,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        spanGaps: false, // Don't draw lines across null values
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                            }
+                        }
+                    }
+                };
+                
+                chartInstances[canvasId] = new Chart(ctx, config);
+            }
+            
+            /**
+             * Toggles all PDF selection checkboxes on the page.
+             */
+            function toggleAllCheckboxes(checked) {
+                document.querySelectorAll('.pdf-select-main, .pdf-select-sub').forEach(checkbox => {
+                    if (checkbox.checked !== checked) {
+                        checkbox.checked = checked;
+                        // Dispatch change event to trigger visibility/class toggling
+                        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
+            }
+
+            /**
+             * Generates a landscape PDF from the dashboard content.
+             */
+            async function generatePDF() {
+                statusDiv.style.display = "block";
+                exportButton.disabled = true;
+
+                // Add a class to the body to apply PDF-specific styles
+                document.body.classList.add("prep-for-pdf");
+                
+                const content = document.getElementById("dashboard-content");
+                const { jsPDF } = window.jspdf;
+
+                try {
+                    // Give the browser a moment to apply new styles
+                    await new Promise(resolve => setTimeout(resolve, 100));
+
+                    const canvas = await html2canvas(content, {
+                        scale: 2, // Higher scale for better quality
+                        useCORS: true,
+                        logging: false,
+                        windowWidth: 1400, // Set a consistent width for rendering
+                    });
+
+                    const imgData = canvas.toDataURL("image/png");
+                    
+                    // A4 Landscape dimensions in mm: 297w x 210h
+                    const pdf = new jsPDF({
+                        orientation: "landscape",
+                        unit: "mm",
+                        format: "a4",
+                    });
+
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                    const pdfHeight = pdf.internal.pageSize.getHeight();
+                    
+                    const canvasWidth = canvas.width;
+                    const canvasHeight = canvas.height;
+
+                    // Calculate the aspect ratio
+                    const ratio = canvasWidth / canvasHeight;
+                    const imgWidth = pdfWidth;
+                    const imgHeight = pdfWidth / ratio;
+
+                    let heightLeft = imgHeight;
+                    let position = 0;
+                    
+                    // Add the first page
+                    pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+                    heightLeft -= pdfHeight;
+
+                    // Add new pages as needed
+                    while (heightLeft > 0) {
+                        position = -heightLeft;
+                        pdf.addPage();
+                        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+                        heightLeft -= pdfHeight;
+                    }
+
+                    pdf.save("dashboard-report.pdf");
+
+                } catch (err) {
+                    console.error("Error generating PDF:", err);
+                    showError("Could not generate PDF. See console for details.");
+                } finally {
+                    // Clean up styles
+                    document.body.classList.remove("prep-for-pdf");
+                    statusDiv.style.display = "none";
+                    exportButton.disabled = false;
                 }
-            });
+            }
             
-            // Add to document temporarily
-            document.body.appendChild(pdfContainer);
-            
-            // Generate PDF
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF({
-                orientation: 'landscape',
-                unit: 'mm',
-                format: 'a4'
-            });
-            
-            // Use html2canvas to capture the content
-            html2canvas(pdfContainer, {
-                scale: 2,
-                useCORS: true,
-                logging: false
-            }).then(canvas => {
-                const imgData = canvas.toDataURL('image/jpeg', 1.0);
-                const imgWidth = 297; // A4 width in mm
-                const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                
-                pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
-                
-                // Save the PDF
-                pdf.save('analytics-report.pdf');
-                
-                // Clean up
-                document.body.removeChild(pdfContainer);
-            });
-        }
+            // --- Auto-load data if available (for testing) ---
+            // You can paste your JSON content here to auto-load on start
+            const testData = ${file:data_full.json};
+            if (testData) {
+                try {
+                    renderDashboard(testData);
+                } catch (e) {
+                    console.error("Could not auto-load test data.", e);
+                }
+            }
+        });
     </script>
 </body>
 </html>
