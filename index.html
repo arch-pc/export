@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Data Export naar PDF</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <style>
+        /* Light Mode Styling voor de hoofdpagina */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .upload-section, .controls, .export-button {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            border-radius: 8px;
+        }
+        .upload-section h2 {
+            margin-top: 0;
+        }
+        .export-button button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .export-button button:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+        .export-button button:disabled {
+            background-color: #a8a8a8;
+            cursor: not-allowed;
+        }
+        .category-selection {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .variable-group {
+            border: 1px solid #eee;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .variable-group h4 {
+            margin-top: 0;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+        }
+        .sub-variable-group {
+            margin-left: 20px;
+            padding-left: 10px;
+            border-left: 2px solid #ddd;
+        }
+
+        /* Styling voor de PDF-inhoud (Light Mode en A4 Landscape) */
+        #pdf-content {
+            display: none; /* Standaard verborgen */
+            background-color: #ffffff;
+            color: #333333;
+            padding: 20px;
+            width: 297mm; /* A4 breedte in landscape */
+            min-height: 210mm; /* A4 hoogte in landscape */
+        }
+
+        #pdf-content h2 {
+            color: #007bff;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
+            page-break-after: avoid;
+        }
+        #pdf-content h3 {
+            color: #555;
+            margin-top: 20px;
+            page-break-after: avoid;
+        }
+        #pdf-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 12px;
+            page-break-inside: avoid; /* Voorkomt het doorsnijden van tabellen */
+        }
+        #pdf-content th, #pdf-content td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        #pdf-content th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        .notes {
+            margin-top: 10px;
+            padding: 10px;
+            border-left: 4px solid #f0ad4e;
+            background-color: #fff9e6;
+            font-style: italic;
+            font-size: 11px;
+            page-break-inside: avoid;
+        }
+        .chart-container {
+            width: 90%; /* Breedte in de PDF */
+            margin: 20px 0;
+            page-break-before: auto;
+            page-break-after: always; /* Zorgt ervoor dat elke grafiek op een nieuwe pagina begint (krachtige scheiding) */
+            padding-top: 20px; /* Ruimte na de tabel */
+        }
+
+        /* Print/PDF-specifieke stijlen voor paginering */
+        @media print {
+            body {
+                margin: 0;
+            }
+            .controls, .export-button, .upload-section {
+                display: none;
+            }
+            #pdf-content {
+                display: block !important;
+                /* Instellen voor landscape */
+                transform: rotate(270deg) translate(-297mm, 0);
+                transform-origin: top left;
+                width: 297mm;
+                height: 210mm;
+            }
+            .variable-container {
+                page-break-before: auto;
+                page-break-after: auto;
+                page-break-inside: avoid;
+            }
+            .chart-container {
+                page-break-after: always; /* Forceert een nieuwe pagina na elke grafiek */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Data Export Tool</h1>
+    
+    <div class="upload-section">
+        <h2>1. Upload JSON-bestand</h2>
+        <input type="file" id="json-upload" accept="application/json" onchange="handleFileUpload(event)">
+        <p id="status-message" style="margin-top: 10px; font-weight: bold;">Laad een JSON-bestand om te beginnen.</p>
+    </div>
+
+    <hr>
+    
+    <div id="controls-section" class="controls" style="display: none;">
+        <h2>2. Selecteer Variabelen voor PDF Export</h2>
+        <div id="selection-area" class="category-selection">
+            </div>
+    </div>
+    
+    <hr>
+
+    <div id="export-section" class="export-button" style="display: none;">
+        <h2>3. Exporteer</h2>
+        <button onclick="generateAndExportPDF()" id="export-btn">Exporteer naar Ligging PDF</button>
+    </div>
+
+    <div id="pdf-content">
+        </div>
+
+<script>
+    let data = null; // Globale variabele voor de geladen JSON-data
+    const weekLabels = ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5"];
+    let chartInstances = [];
+
+    // Functie om de delta (absoluut en percentage) te berekenen
+    function calculateDelta(w1, w2, unit) {
+        if (w1 === null || w2 === null || w1 === undefined || w2 === undefined) {
+            return { delta: '-', percentage: '-' };
+        }
+        
+        // Zorg ervoor dat de waarden numeriek zijn
+        const val1 = Number(w1);
+        const val2 = Number(w2);
+
+        if (isNaN(val1) || isNaN(val2)) {
+            return { delta: '-', percentage: '-' };
+        }
+        
+        const delta = val2 - val1;
+        const percentage = val1 === 0 ? (delta === 0 ? '0.00%' : 'N/A') : ((delta / val1) * 100).toFixed(2) + '%';
+        
+        // Formattering van de delta (geen decimalen tenzij het om een percentage gaat)
+        const formattedDelta = delta.toFixed(unit === '%' ? 0 : 0); 
+        
+        return { 
+            delta: delta > 0 ? `+${formattedDelta}` : formattedDelta, 
+            percentage: delta > 0 ? `+${percentage}` : percentage
+        };
+    }
+
+    // Functie om het selectiegebied met vinkjes te vullen
+    function renderSelectionArea() {
+        if (!data) return;
+
+        const selectionArea = document.getElementById('selection-area');
+        selectionArea.innerHTML = '';
+
+        for (const category in data) {
+            if (!data.hasOwnProperty(category)) continue;
+
+            let categoryHTML = `<div class="variable-group"><h3>${category}</h3>`;
+            
+            data[category].variables.forEach((variable, varIndex) => {
+                const varId = `${category}-${varIndex}`;
+                const varName = variable.name.trim();
+
+                // Gebruik de eerste twee weken voor de preview in de selectie
+                const w1_val = variable.data[weekLabels[0]] !== null ? variable.data[weekLabels[0]] : '-';
+                const w2_val = variable.data[weekLabels[1]] !== null ? variable.data[weekLabels[1]] : '-';
+
+                categoryHTML += `
+                    <div>
+                        <label>
+                            <input type="checkbox" name="mainVar" value="${varId}" checked>
+                            <strong>${varName}</strong> (${w1_val} ${variable.unit} / ${w2_val} ${variable.unit})
+                        </label>
+                    </div>
+                    <div class="sub-variable-group">
+                `;
+
+                variable.subVariables.forEach((subVar, subIndex) => {
+                    const subVarId = `${varId}-sub-${subIndex}`;
+                    const subVarName = subVar.name.trim();
+
+                    const sub_w1_val = subVar.data[weekLabels[0]] !== null ? subVar.data[weekLabels[0]] : '-';
+                    const sub_w2_val = subVar.data[weekLabels[1]] !== null ? subVar.data[weekLabels[1]] : '-';
+
+                    categoryHTML += `
+                        <label>
+                            <input type="checkbox" name="subVar" value="${subVarId}" checked>
+                            ${subVarName} (${sub_w1_val} / ${sub_w2_val})
+                        </label><br>
+                    `;
+                });
+
+                categoryHTML += `</div>`;
+            });
+
+            categoryHTML += `</div>`;
+            selectionArea.innerHTML += categoryHTML;
+        }
+    }
+
+    // Functie om de data in HTML op te maken met delta's
+    function createDataHTML(variable, selectedSubVars) {
+        const varName = variable.name.trim();
+        const unit = variable.unit;
+        let html = '';
+
+        // Tabelkop
+        let table = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>Metriek</th>
+                        <th>${weekLabels[0]} (${unit})</th>
+                        <th>${weekLabels[1]} (${unit})</th>
+                        <th>Delta (Absoluut)</th>
+                        <th>Delta (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        // Hoofdvariabele rij
+        const mainData = variable.data;
+        const mainDelta = calculateDelta(mainData[weekLabels[0]], mainData[weekLabels[1]], unit);
+        table += `
+            <tr style="font-weight: bold; background-color: #f7f7f7;">
+                <td>${varName}</td>
+                <td>${mainData[weekLabels[0]] !== null ? mainData[weekLabels[0]] : '-'}</td>
+                <td>${mainData[weekLabels[1]] !== null ? mainData[weekLabels[1]] : '-'}</td>
+                <td>${mainDelta.delta}</td>
+                <td>${mainDelta.percentage}</td>
+            </tr>
+        `;
+
+        // Subvariabelen rijen
+        variable.subVariables.forEach((subVar, subIndex) => {
+            const subVarId = `${variable.category}-${variable.index}-sub-${subIndex}`;
+            if (selectedSubVars.includes(subVarId)) {
+                const subData = subVar.data;
+                const subDelta = calculateDelta(subData[weekLabels[0]], subData[weekLabels[1]], unit); 
+                table += `
+                    <tr>
+                        <td style="padding-left: 20px;">- ${subVar.name.trim()}</td>
+                        <td>${subData[weekLabels[0]] !== null ? subData[weekLabels[0]] : '-'}</td>
+                        <td>${subData[weekLabels[1]] !== null ? subData[weekLabels[1]] : '-'}</td>
+                        <td>${subDelta.delta}</td>
+                        <td>${subDelta.percentage}</td>
+                    </tr>
+                `;
+            }
+        });
+
+        table += `</tbody></table>`;
+        html += table;
+
+        // Opmerkingen toevoegen
+        if (variable.notes && variable.notes.trim() !== "") {
+            html += `<p class="notes"><strong>Opmerkingen:</strong> ${variable.notes.trim()}</p>`;
+        }
+
+        // Grafiek container
+        html += `<div class="chart-container"><canvas id="chart-${variable.category}-${variable.index}"></canvas></div>`;
+
+        return html;
+    }
+
+    // Functie om een grafiek te tekenen (Line Chart)
+    function createChart(variable) {
+        const labels = [weekLabels[0], weekLabels[1]];
+        const datasets = [];
+        
+        // 1. Hoofdvariabele Data
+        // Filter nulls zodat de grafiek geen gaten trekt in de lijn als er data is
+        const mainDataPoints = labels.map(label => variable.data[label]).filter(v => v !== null && v !== undefined);
+        const mainLabels = labels.slice(0, mainDataPoints.length);
+        
+        if (mainDataPoints.length > 0) {
+            datasets.push({
+                label: variable.name.trim(),
+                data: mainDataPoints,
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1,
+                fill: false,
+                borderWidth: 3
+            });
+        }
+
+        // 2. Subvariabele Data (alleen geselecteerde)
+        const selectedSubVars = Array.from(document.querySelectorAll('input[name="subVar"]:checked')).map(cb => cb.value);
+        
+        variable.subVariables.forEach((subVar, subIndex) => {
+            const subVarId = `${variable.category}-${variable.index}-sub-${subIndex}`;
+            if (selectedSubVars.includes(subVarId)) {
+                const subDataPoints = labels.map(label => subVar.data[label]).filter(v => v !== null && v !== undefined);
+                if (subDataPoints.length > 0) {
+                    datasets.push({
+                        label: subVar.name.trim(),
+                        data: subDataPoints,
+                        borderColor: `hsl(${subIndex * 60}, 70%, 50%)`, // Verschillende kleuren
+                        tension: 0.1,
+                        fill: false
+                    });
+                }
+            }
+        });
+
+        if (datasets.length === 0) return; // Geen data om te tekenen
+
+        const ctx = document.getElementById(`chart-${variable.category}-${variable.index}`).getContext('2d');
+        const newChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: mainLabels, // Gebruik de labels van de hoofdvariabele (W1, W2)
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `Trend: ${variable.name.trim()} (${variable.unit})`
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        chartInstances.push(newChart);
+    }
+
+    // Functie die wordt aangeroepen na succesvolle JSON-upload
+    function initializeApp(jsonData) {
+        data = jsonData;
+        
+        // Ruim op en activeer de UI
+        document.getElementById('selection-area').innerHTML = '';
+        document.getElementById('pdf-content').innerHTML = '';
+        document.getElementById('status-message').textContent = '✅ Data succesvol geladen. Selecteer variabelen voor export.';
+        document.getElementById('controls-section').style.display = 'block';
+        document.getElementById('export-section').style.display = 'block';
+        document.getElementById('export-btn').disabled = false;
+        
+        // Start de applicatielogica
+        renderSelectionArea();
+    }
+
+    // Functie voor het inlezen van het JSON-bestand
+    function handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+            document.getElementById('status-message').textContent = 'Bezig met inlezen...';
+            document.getElementById('export-btn').disabled = true;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    // Verwijder eventuele BOM (Byte Order Mark) en parse de JSON
+                    const jsonString = e.target.result.replace(/^\uFEFF/, '');
+                    const jsonData = JSON.parse(jsonString);
+                    initializeApp(jsonData);
+                } catch (error) {
+                    document.getElementById('status-message').textContent = '❌ Fout: Kan het bestand niet parsen als JSON. Controleer de bestandsstructuur.';
+                    console.error('JSON parsing error:', error);
+                    alert('Fout bij het inlezen van de JSON-data. Controleer of het een geldig JSON-bestand is.');
+                    data = null; // Reset data bij fout
+                    document.getElementById('controls-section').style.display = 'none';
+                    document.getElementById('export-section').style.display = 'none';
+                }
+            };
+            reader.onerror = function(e) {
+                document.getElementById('status-message').textContent = '❌ Fout bij het lezen van het bestand.';
+                document.getElementById('export-btn').disabled = true;
+            };
+            reader.readAsText(file);
+        }
+    }
+    
+    // Hoofdfunctie voor het genereren en exporteren van de PDF
+    async function generateAndExportPDF() {
+        if (!data) {
+            alert('Laad eerst een JSON-bestand in (stap 1).');
+            return;
+        }
+
+        const pdfContent = document.getElementById('pdf-content');
+        pdfContent.innerHTML = '';
+        
+        // 1. Geselecteerde variabelen ophalen
+        const selectedMainVars = Array.from(document.querySelectorAll('input[name="mainVar"]:checked')).map(cb => cb.value);
+        const selectedSubVars = Array.from(document.querySelectorAll('input[name="subVar"]:checked')).map(cb => cb.value);
+
+        if (selectedMainVars.length === 0) {
+            alert("Selecteer minimaal één variabele om te exporteren (stap 2).");
+            return;
+        }
+
+        document.getElementById('status-message').textContent = 'Bezig met genereren van PDF... Dit kan even duren.';
+
+        // 2. HTML genereren en toevoegen aan de verborgen container
+        const categoryVarsFlat = Object.keys(data).flatMap(category => 
+            data[category].variables.map((v, i) => ({...v, category, index: i}))
+        );
+
+        for (const category in data) {
+            if (!data.hasOwnProperty(category)) continue;
+
+            const selectedVarsInCategory = categoryVarsFlat.filter(v => 
+                v.category === category && selectedMainVars.includes(`${v.category}-${v.index}`)
+            );
+
+            if (selectedVarsInCategory.length > 0) {
+                let categoryHTML = `<div class="category-container" style="page-break-after: always;"><h2>${category}</h2>`;
+
+                selectedVarsInCategory.forEach(variable => {
+                    const varId = `${variable.category}-${variable.index}`;
+                    categoryHTML += `<div id="var-container-${varId}" class="variable-container">`;
+                    categoryHTML += `<h3>${variable.name.trim()}</h3>`;
+                    categoryHTML += createDataHTML(variable, selectedSubVars);
+                    categoryHTML += `</div>`;
+                });
+                categoryHTML += `</div>`;
+                pdfContent.innerHTML += categoryHTML;
+            }
+        }
+        
+        // 3. Grafieken renderen
+        chartInstances.forEach(chart => chart.destroy()); // Oude grafieken vernietigen
+        chartInstances = [];
+        
+        // Wacht kort tot de DOM is bijgewerkt
+        await new Promise(resolve => setTimeout(resolve, 50)); 
+        
+        categoryVarsFlat
+            .filter(v => selectedMainVars.includes(`${v.category}-${v.index}`))
+            .forEach(createChart);
+        
+        // Wacht tot Chart.js de canvassen heeft getekend (essentieel voor html2canvas)
+        await new Promise(resolve => setTimeout(resolve, 800)); 
+        
+        // 4. PDF Export
+        
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('l', 'mm', 'a4'); // 'l' for landscape (liggend)
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const margin = 10;
+        let y = margin;
+
+        const contentElements = pdfContent.querySelectorAll('.category-container');
+        
+        for (let i = 0; i < contentElements.length; i++) {
+            const element = contentElements[i];
+
+            // Render de elementen één voor één om paginering te regelen
+            await html2canvas(element, { scale: 1.5, logging: false }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+                const imgWidth = pdfWidth - 2 * margin; // Breek de breedte bij de marges af
+                
+                let currentY = margin;
+                let remainingHeight = imgHeight;
+                let pageNumber = 1;
+
+                while (remainingHeight > 0) {
+                    if (pageNumber > 1) {
+                        pdf.addPage('a4', 'l');
+                        currentY = margin;
+                    }
+
+                    // Hoogte van het stuk dat op deze pagina past
+                    const pageContentHeight = pdfHeight - currentY - margin;
+                    
+                    if (remainingHeight < pageContentHeight) {
+                        // Resterende inhoud past op deze pagina
+                        pdf.addImage(imgData, 'PNG', margin, currentY, imgWidth, imgHeight, undefined, 'FAST', 0, 0, 0, remainingHeight / imgHeight);
+                        y = currentY + remainingHeight + margin; // Update de Y-positie voor het volgende element
+                        remainingHeight = 0;
+                    } else {
+                        // De inhoud vult de rest van de pagina, of is groter
+                        const clipHeight = pageContentHeight;
+                        const clipRatio = clipHeight / imgHeight;
+                        
+                        // Bereken de y-offset in de afbeelding om te knippen
+                        const yOffset = (pageNumber - 1) * pageContentHeight;
+
+                        pdf.addImage(imgData, 'PNG', margin, currentY, imgWidth, imgHeight, undefined, 'FAST', 0, -yOffset, imgWidth, clipHeight);
+                        remainingHeight -= clipHeight;
+                        pageNumber++;
+                        y = margin; // Reset y voor de nieuwe pagina
+                    }
+                }
+            });
+        }
+
+        pdf.save('data_export.pdf');
+        document.getElementById('status-message').textContent = '✅ PDF succesvol geëxporteerd!';
+    }
+</script>
+
+</body>
+</html>
