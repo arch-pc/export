@@ -147,9 +147,10 @@
         }
         
         .pdf-checkbox input[type="checkbox"] {
-            width: 14px;
-            height: 14px;
+            width: 16px;
+            height: 16px;
             cursor: pointer;
+            margin: 0;
         }
         
         .tag {
@@ -167,7 +168,16 @@
         }
         
         .checkbox-label {
-            display: none; /* Remove old style */
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .checkbox-label input {
+            cursor: pointer;
+            margin: 0;
         }
         
         /* Horizontal data layout */
@@ -645,7 +655,7 @@
             }, 100);
         }
         
-        // Export to PDF
+        // Export to PDF with charts
         async function exportToPDF() {
             const btn = document.getElementById('exportBtn');
             btn.disabled = true;
@@ -671,23 +681,38 @@
                     // Remove checkboxes from clone
                     clone.querySelectorAll('.pdf-checkbox').forEach(el => el.remove());
                     
+                    // Force light background
+                    clone.style.background = '#ffffff';
+                    
+                    // Find chart canvas in original block and clone it properly
+                    const originalCanvas = block.querySelector('canvas');
+                    const clonedCanvas = clone.querySelector('canvas');
+                    
+                    if (originalCanvas && clonedCanvas) {
+                        // Get the chart context and redraw it on the cloned canvas
+                        const ctx = clonedCanvas.getContext('2d');
+                        clonedCanvas.width = originalCanvas.width;
+                        clonedCanvas.height = originalCanvas.height;
+                        ctx.drawImage(originalCanvas, 0, 0);
+                    }
+                    
                     // Temporarily add to DOM for rendering
                     clone.style.position = 'absolute';
                     clone.style.left = '-9999px';
                     clone.style.width = '1200px';
-                    clone.style.background = 'white';
                     clone.style.padding = '20px';
                     document.body.appendChild(clone);
                     
-                    // Wait a bit for charts to render in clone
-                    await new Promise(resolve => setTimeout(resolve, 100));
+                    // Wait for rendering
+                    await new Promise(resolve => setTimeout(resolve, 200));
                     
                     // Capture with html2canvas
                     const canvas = await html2canvas(clone, {
                         scale: 2,
                         useCORS: true,
                         logging: false,
-                        backgroundColor: '#ffffff'
+                        backgroundColor: '#ffffff',
+                        allowTaint: true
                     });
                     
                     // Remove clone
@@ -721,6 +746,7 @@
                 
             } catch (err) {
                 alert('Fout bij PDF export: ' + err.message);
+                console.error(err);
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Export naar PDF';
