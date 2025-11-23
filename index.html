@@ -169,37 +169,41 @@
             display: flex;
             gap: 15px;
             align-items: flex-start;
+            flex-wrap: wrap;
         }
         
         .data-section {
-            flex: 0 0 auto;
+            flex: 1;
+            min-width: 400px;
         }
         
         .data-table-horizontal {
-            display: inline-block;
+            display: block;
             margin-bottom: 10px;
+            overflow-x: auto;
         }
         
         table {
             border-collapse: collapse;
             background: white;
             font-size: 11px;
-        }
-        
-        table.horizontal-layout {
-            display: table;
+            width: 100%;
         }
         
         table.horizontal-layout th {
             background: #34495e;
             color: white;
             font-weight: 600;
-            text-transform: uppercase;
-            font-size: 9px;
+            font-size: 10px;
             letter-spacing: 0.3px;
-            padding: 4px 8px;
-            text-align: center;
+            padding: 6px 10px;
+            text-align: left;
             border-right: 1px solid #2c3e50;
+            white-space: nowrap;
+        }
+        
+        table.horizontal-layout th:first-child {
+            min-width: 180px;
         }
         
         table.horizontal-layout th:last-child {
@@ -207,10 +211,17 @@
         }
         
         table.horizontal-layout td {
-            padding: 4px 8px;
-            text-align: center;
+            padding: 5px 10px;
+            text-align: left;
             border-right: 1px solid #ecf0f1;
             border-bottom: 1px solid #ecf0f1;
+            white-space: nowrap;
+        }
+        
+        table.horizontal-layout td:first-child {
+            font-weight: 500;
+            color: #2c3e50;
+            background: #f8f9fa;
         }
         
         table.horizontal-layout td:last-child {
@@ -219,6 +230,12 @@
         
         table.horizontal-layout tr:last-child td {
             border-bottom: none;
+        }
+        
+        table.horizontal-layout .subvar-row td:first-child {
+            padding-left: 20px;
+            font-weight: 400;
+            color: #555;
         }
         
         tr:hover {
@@ -247,6 +264,7 @@
             background: white;
             border-radius: 4px;
             border-left: 2px solid #95a5a6;
+            display: none; /* Hidden since subvariables are now in main table */
         }
         
         .subvariable-name {
@@ -400,34 +418,51 @@
             });
         }
         
-        // Render horizontal data table
-        function renderTable(data, unit) {
-            const weeks = sortWeeks(Object.keys(data));
+        // Render horizontal data table with main variable and subvariables combined
+        function renderCombinedTable(variable, unit) {
+            const weeks = sortWeeks(Object.keys(variable.data));
             
             let html = '<div class="data-table-horizontal"><table class="horizontal-layout">';
             
-            // Header row with week labels
+            // Header row with variable name column + week labels
             html += '<thead><tr>';
+            html += '<th></th>'; // Empty cell for variable names column
             weeks.forEach(week => {
                 html += `<th>${week}</th>`;
             });
             html += '</tr></thead><tbody>';
             
-            // Values row
+            // Main variable row
             html += '<tr>';
-            weeks.forEach(week => {
-                const value = data[week];
-                html += `<td>${value !== null ? value + unit : '<span class="null-value">–</span>'}</td>`;
+            html += `<td>${trimName(variable.name)}</td>`;
+            weeks.forEach((week, index) => {
+                const value = variable.data[week];
+                const delta = calculateDelta(variable.data, weeks, index);
+                let cellContent = value !== null ? value + unit : '<span class="null-value">–</span>';
+                if (delta !== null && delta !== 0) {
+                    cellContent += ' ' + formatDelta(delta, unit);
+                }
+                html += `<td>${cellContent}</td>`;
             });
             html += '</tr>';
             
-            // Delta row
-            html += '<tr>';
-            weeks.forEach((week, index) => {
-                const delta = calculateDelta(data, weeks, index);
-                html += `<td>${formatDelta(delta, unit)}</td>`;
-            });
-            html += '</tr>';
+            // Subvariables rows
+            if (variable.subVariables && variable.subVariables.length > 0) {
+                variable.subVariables.forEach(subVar => {
+                    html += '<tr class="subvar-row">';
+                    html += `<td>${trimName(subVar.name)}</td>`;
+                    weeks.forEach((week, index) => {
+                        const value = subVar.data[week];
+                        const delta = calculateDelta(subVar.data, weeks, index);
+                        let cellContent = value !== null ? value + unit : '<span class="null-value">–</span>';
+                        if (delta !== null && delta !== 0) {
+                            cellContent += ' ' + formatDelta(delta, unit);
+                        }
+                        html += `<td>${cellContent}</td>`;
+                    });
+                    html += '</tr>';
+                });
+            }
             
             html += '</tbody></table></div>';
             return html;
@@ -557,34 +592,29 @@
                         html += `</label>`;
                         html += `</div></div>`;
                         
-                        // Horizontal layout: table + chart
+                        // Combined table with main variable and subvariables
                         html += `<div class="data-container">`;
                         html += `<div class="data-section">`;
-                        
-                        // Main variable table
-                        html += renderTable(variable.data, unit);
+                        html += renderCombinedTable(variable, unit);
+                        html += `</div>`;
                         
                         // Chart
                         const chartId = `chart-${varId}`;
                         html += `<div class="chart-container"><canvas id="${chartId}"></canvas></div>`;
-                        html += `</div>`; // Close data-section
                         
                         html += `</div>`; // Close data-container
                         
-                        // Subvariables
+                        // Subvariables checkboxes (hidden but still functional for PDF)
                         if (variable.subVariables && variable.subVariables.length > 0) {
+                            html += `<div style="margin-top: 10px; font-size: 11px;">`;
+                            html += `<strong>PDF selectie subvariabelen:</strong> `;
                             variable.subVariables.forEach((subVar, subIdx) => {
                                 const subId = `${varId}-sub${subIdx}`;
-                                html += `<div class="subvariable-block" data-subvar="${subId}">`;
-                                html += `<div class="variable-header">`;
-                                html += `<div class="subvariable-name">${trimName(subVar.name)}</div>`;
-                                html += `<label class="checkbox-label">`;
-                                html += `<input type="checkbox" class="pdf-select" data-subvar="${subId}" checked> PDF`;
+                                html += `<label class="checkbox-label" style="margin-left: 10px;">`;
+                                html += `<input type="checkbox" class="pdf-select" data-subvar="${subId}" checked> ${trimName(subVar.name)}`;
                                 html += `</label>`;
-                                html += `</div>`;
-                                html += renderTable(subVar.data, unit);
-                                html += `</div>`;
                             });
+                            html += `</div>`;
                         }
                         
                         // Notes
