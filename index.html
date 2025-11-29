@@ -392,432 +392,431 @@
         <div id="reportContent"></div>
     </div>
 
-    <script>
-        // Global data store
-        let jsonData = null;
-        let chartInstances = [];
-        
-        // File input handler
-        document.getElementById('fileInput').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                try {
-                    jsonData = JSON.parse(event.target.result);
-                    renderReport(jsonData);
-                    document.getElementById('exportBtn').disabled = false;
-                    document.getElementById('errorMsg').innerHTML = '';
-                } catch (err) {
-                    showError('Ongeldige JSON: ' + err.message);
-                }
-            };
-            reader.readAsText(file);
-        });
-        
-        // Export button handler
-        document.getElementById('exportBtn').addEventListener('click', () => {
-            exportToPDF();
-        });
-        
-        // Show error message
-        function showError(msg) {
-            document.getElementById('errorMsg').innerHTML = `<div class="error">${msg}</div>`;
-            document.getElementById('reportContent').innerHTML = '';
-            document.getElementById('exportBtn').disabled = true;
-        }
-        
-        // Trim whitespace from variable names
-        function trimName(name) {
-            return name.replace(/\s+/g, ' ').trim();
-        }
-        
-        // Calculate delta between current and previous non-null value
-        function calculateDelta(data, weeks, currentIndex) {
-            if (currentIndex === 0) return null;
-            
-            const currentValue = data[weeks[currentIndex]];
-            if (currentValue === null) return null;
-            
-            // Find previous non-null value
-            for (let i = currentIndex - 1; i >= 0; i--) {
-                const prevValue = data[weeks[i]];
-                if (prevValue !== null) {
-                    return currentValue - prevValue;
-                }
-            }
-            
-            return null; // First non-null value
-        }
-        
-        // Format delta for display
-        function formatDelta(delta, unit) {
-            if (delta === null) return '';
-            const sign = delta >= 0 ? '+' : '';
-            const className = delta >= 0 ? 'delta-positive' : 'delta-negative';
-            return `<span class="${className}">${sign}${delta}${unit}</span>`;
-        }
-        
-        // Natural sort for week labels
-        function sortWeeks(weeks) {
-            return weeks.sort((a, b) => {
-                const numA = parseInt(a.match(/\d+/)?.[0] || '0');
-                const numB = parseInt(b.match(/\d+/)?.[0] || '0');
-                return numA - numB;
-            });
-        }
-        
-        // Render horizontal data table with main variable and subvariables combined
-        function renderCombinedTable(variable, unit, varId) {
-            const weeks = sortWeeks(Object.keys(variable.data));
-            
-            let html = '<div class="data-table-horizontal"><table class="horizontal-layout">';
-            
-            // Header row with checkbox column + variable name column + week labels
-            html += '<thead><tr>';
-            html += '<th>PDF</th>'; // Checkbox column header
-            html += '<th></th>'; // Empty cell for variable names column
-            weeks.forEach(week => {
-                html += `<th>${week}</th>`;
-            });
-            html += '</tr></thead><tbody>';
-            
-            // Main variable row
-            html += '<tr>';
-            html += `<td><input type="checkbox" class="pdf-select-row" data-var="${varId}" data-type="main" checked></td>`;
-            html += `<td>${trimName(variable.name)}</td>`;
-            weeks.forEach((week, index) => {
-                const value = variable.data[week];
-                const delta = calculateDelta(variable.data, weeks, index);
-                let cellContent = value !== null ? value + unit : '<span class="null-value">–</span>';
-                if (delta !== null && delta !== 0) {
-                    cellContent += ' ' + formatDelta(delta, unit);
-                }
-                html += `<td>${cellContent}</td>`;
-            });
-            html += '</tr>';
-            
-            // Subvariables rows
-            if (variable.subVariables && variable.subVariables.length > 0) {
-                variable.subVariables.forEach((subVar, subIdx) => {
-                    const subId = `${varId}-sub${subIdx}`;
-                    html += '<tr class="subvar-row">';
-                    html += `<td><input type="checkbox" class="pdf-select-row" data-var="${varId}" data-subvar="${subId}" data-type="sub" checked></td>`;
-                    html += `<td>${trimName(subVar.name)}</td>`;
-                    weeks.forEach((week, index) => {
-                        const value = subVar.data[week];
-                        const delta = calculateDelta(subVar.data, weeks, index);
-                        let cellContent = value !== null ? value + unit : '<span class="null-value">–</span>';
-                        if (delta !== null && delta !== 0) {
-                            cellContent += ' ' + formatDelta(delta, unit);
-                        }
-                        html += `<td>${cellContent}</td>`;
-                    });
-                    html += '</tr>';
-                });
-            }
-            
-            html += '</tbody></table></div>';
-            return html;
-        }
-        
-        // Create chart for variable
-        function createChart(canvasId, variable, categoryName) {
-            const ctx = document.getElementById(canvasId);
-            if (!ctx) return;
-            
-            const weeks = sortWeeks(Object.keys(variable.data));
-            const datasets = [];
-            
-            // Main variable dataset
-            datasets.push({
-                label: trimName(variable.name),
-                data: weeks.map(w => variable.data[w]),
-                borderColor: '#3498db',
-                backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                tension: 0.3,
-                borderWidth: 2,
-                pointRadius: 3
-            });
-            
-            // Subvariables datasets
-            const colors = ['#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#34495e'];
-            if (variable.subVariables && variable.subVariables.length > 0) {
-                variable.subVariables.forEach((subVar, idx) => {
-                    datasets.push({
-                        label: trimName(subVar.name),
-                        data: weeks.map(w => subVar.data[w]),
-                        borderColor: colors[idx % colors.length],
-                        backgroundColor: colors[idx % colors.length] + '20',
-                        tension: 0.3,
-                        borderWidth: 2,
-                        pointRadius: 2
-                    });
-                });
-            }
-            
-            const chart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: weeks,
-                    datasets: datasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    aspectRatio: 2,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'bottom',
-                            labels: {
-                                font: {
-                                    size: 10
-                                },
-                                boxWidth: 12,
-                                padding: 8
-                            }
-                        },
-                        title: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: false,
-                            ticks: {
-                                font: {
-                                    size: 10
-                                }
-                            }
-                        },
-                        x: {
-                            ticks: {
-                                font: {
-                                    size: 10
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-            
-            chartInstances.push(chart);
-        }
-        
-        // Render complete report
-        function renderReport(data) {
-            // Destroy existing charts
-            chartInstances.forEach(chart => chart.destroy());
-            chartInstances = [];
-            
-            const content = document.getElementById('reportContent');
-            let html = '';
-            
-            Object.keys(data).forEach(categoryKey => {
-                const category = data[categoryKey];
-                html += `<div class="category-card" data-category="${categoryKey}">`;
-                html += `<h2 class="category-title">${categoryKey}</h2>`;
-                
-                if (category.variables) {
-                    category.variables.forEach((variable, varIdx) => {
-                        const varId = `${categoryKey}-${varIdx}`;
-                        const cleanName = trimName(variable.name);
-                        const unit = variable.unit || '';
-                        
-                        html += `<div class="variable-block" data-variable="${varId}">`;
-                        html += `<div class="variable-header">`;
-                        html += `<div class="variable-name">${cleanName}</div>`;
-                        html += `<div class="variable-meta">`;
-                        
-                        if (variable.tags && variable.tags.length > 0) {
-                            variable.tags.forEach(tag => {
-                                html += `<span class="tag">${tag}</span>`;
-                            });
-                        }
-                        
-                        if (unit) {
-                            html += `<span class="unit">(${unit})</span>`;
-                        }
-                        
-                        html += `</div></div>`;
-                        
-                        // Combined table with main variable and subvariables
-                        html += `<div class="data-container">`;
-                        html += `<div class="data-section">`;
-                        html += renderCombinedTable(variable, unit, varId);
-                        html += `</div>`;
-                        
-                        // Chart
-                        const chartId = `chart-${varId}`;
-                        html += `<div class="chart-container"><canvas id="${chartId}"></canvas></div>`;
-                        
-                        html += `</div>`; // Close data-container
-                        
-                        // Remove old subvariable checkboxes section
-                        // Subvariables are now always included with main variable
-                        
-                        // Notes
-                        if (variable.notes && variable.notes.trim()) {
-                            html += `<div class="notes-box" data-notes="${varId}">`;
-                            html += `<div class="notes-title">📝 Opmerkingen</div>`;
-                            html += `<div class="notes-content">${variable.notes}</div>`;
-                            html += `</div>`;
-                        }
-                        
-                        html += `</div>`;
-                    });
-                }
-                
-                html += `</div>`;
-            });
-            
-            content.innerHTML = html;
-            
-            // Create charts after DOM update
-            setTimeout(() => {
-                Object.keys(data).forEach(categoryKey => {
-                    const category = data[categoryKey];
-                    if (category.variables) {
-                        category.variables.forEach((variable, varIdx) => {
-                            const varId = `${categoryKey}-${varIdx}`;
-                            const chartId = `chart-${varId}`;
-                            createChart(chartId, variable, categoryKey);
-                        });
-                    }
-                });
-            }, 100);
-        }
-        
-        // Export to PDF with charts and selective rows
-        async function exportToPDF() {
-            const btn = document.getElementById('exportBtn');
-            btn.disabled = true;
-            btn.textContent = 'PDF genereren...';
-            
-            try {
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF('landscape', 'mm', 'a4');
-                let firstPage = true;
-                
-                // Get all variable blocks
-                const blocks = document.querySelectorAll('.variable-block');
-                
-                for (const block of blocks) {
-                    const varId = block.dataset.variable;
-                    
-                    // Check if main variable is selected
-                    const mainCheckbox = block.querySelector(`input[data-var="${varId}"][data-type="main"]`);
-                    if (!mainCheckbox || !mainCheckbox.checked) continue;
-                    
-                    // Clone and prepare element for capture
-                    const clone = block.cloneNode(true);
-                    
-                    // Remove checkbox column from table
-                    const table = clone.querySelector('table');
-                    if (table) {
-                        // Remove header checkbox column
-                        const headerRow = table.querySelector('thead tr');
-                        if (headerRow) {
-                            headerRow.deleteCell(0);
-                        }
-                        
-                        // Remove checkbox cells from all data rows and remove unchecked rows
-                        const rows = Array.from(table.querySelectorAll('tbody tr'));
-                        rows.forEach((row, idx) => {
-                            const checkbox = row.querySelector('input[type="checkbox"]');
-                            
-                            // Check if this row should be included
-                            if (checkbox) {
-                                const originalCheckbox = block.querySelectorAll('tbody tr input[type="checkbox"]')[idx];
-                                if (!originalCheckbox.checked) {
-                                    row.remove();
-                                    return;
-                                }
-                            }
-                            
-                            // Remove checkbox cell
-                            row.deleteCell(0);
-                        });
-                    }
-                    
-                    // Force light background
-                    clone.style.background = '#ffffff';
-                    
-                    // Find chart canvas in original block and clone it properly
-                    const originalCanvas = block.querySelector('canvas');
-                    const clonedCanvas = clone.querySelector('canvas');
-                    
-                    if (originalCanvas && clonedCanvas) {
-                        const ctx = clonedCanvas.getContext('2d');
-                        clonedCanvas.width = originalCanvas.width;
-                        clonedCanvas.height = originalCanvas.height;
-                        ctx.drawImage(originalCanvas, 0, 0);
-                    }
-                    
-                    // Temporarily add to DOM for rendering
-                    clone.style.position = 'absolute';
-                    clone.style.left = '-9999px';
-                    clone.style.top = '0';
-                    clone.style.width = '1100px'; // Smaller width to fit better
-                    clone.style.padding = '15px';
-                    clone.style.boxSizing = 'border-box';
-                    document.body.appendChild(clone);
-                    
-                    // Wait for rendering
-                    await new Promise(resolve => setTimeout(resolve, 200));
-                    
-                    // Capture with html2canvas
-                    const canvas = await html2canvas(clone, {
-                        scale: 1.5, // Lower scale to prevent cutoff
-                        useCORS: true,
-                        logging: false,
-                        backgroundColor: '#ffffff',
-                        allowTaint: true,
-                        windowWidth: 1100,
-                        windowHeight: clone.scrollHeight
-                    });
-                    
-                    // Remove clone
-                    document.body.removeChild(clone);
-                    
-                    // Add page if not first
-                    if (!firstPage) {
-                        pdf.addPage();
-                    }
-                    firstPage = false;
-                    
-                    // Add image to PDF
-                    const imgData = canvas.toDataURL('image/png');
-                    const pdfWidth = pdf.internal.pageSize.getWidth() - 10; // Less margin
-                    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                    
-                    // Check if content fits on one page
-                    const pageHeight = pdf.internal.pageSize.getHeight() - 10;
-                    
-                    if (pdfHeight <= pageHeight) {
-                        pdf.addImage(imgData, 'PNG', 5, 5, pdfWidth, pdfHeight);
-                    } else {
-                        // Content is too tall, fit to page height
-                        const scale = pageHeight / pdfHeight;
-                        const scaledWidth = pdfWidth * scale;
-                        const scaledHeight = pageHeight;
-                        pdf.addImage(imgData, 'PNG', 5, 5, scaledWidth, scaledHeight);
-                    }
-                }
-                
-                // Save PDF
-                pdf.save('analytics-report.pdf');
-                
-            } catch (err) {
-                alert('Fout bij PDF export: ' + err.message);
-                console.error(err);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Export naar PDF';
-            }
-        }
-    </script>
+<script>
+    // Global data store
+    let jsonData = null;
+    let chartInstances = [];
+    
+    // File input handler
+    document.getElementById('fileInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                jsonData = JSON.parse(event.target.result);
+                renderReport(jsonData);
+                document.getElementById('exportBtn').disabled = false;
+                document.getElementById('errorMsg').innerHTML = '';
+            } catch (err) {
+                showError('Ongeldige JSON: ' + err.message);
+            }
+        };
+        reader.readAsText(file);
+    });
+    
+    // Export button handler
+    document.getElementById('exportBtn').addEventListener('click', () => {
+        exportToPDF();
+    });
+    
+    // Show error message
+    function showError(msg) {
+        document.getElementById('errorMsg').innerHTML = `<div class="error">${msg}</div>`;
+        document.getElementById('reportContent').innerHTML = '';
+        document.getElementById('exportBtn').disabled = true;
+    }
+    
+    // Trim whitespace from variable names
+    function trimName(name) {
+        return name.replace(/\s+/g, ' ').trim();
+    }
+    
+    // Calculate delta between current and previous non-null value
+    function calculateDelta(data, weeks, currentIndex) {
+        if (currentIndex === 0) return null;
+        
+        const currentValue = data[weeks[currentIndex]];
+        if (currentValue === null) return null;
+        
+        // Find previous non-null value
+        for (let i = currentIndex - 1; i >= 0; i--) {
+            const prevValue = data[weeks[i]];
+            if (prevValue !== null) {
+                return currentValue - prevValue;
+            }
+        }
+        
+        return null; // First non-null value
+    }
+    
+    // Format delta for display
+    function formatDelta(delta, unit) {
+        if (delta === null) return '';
+        const sign = delta >= 0 ? '+' : '';
+        const className = delta >= 0 ? 'delta-positive' : 'delta-negative';
+        return `<span class="${className}">${sign}${delta}${unit}</span>`;
+    }
+    
+    // Natural sort for week labels
+    function sortWeeks(weeks) {
+        return weeks.sort((a, b) => {
+            const numA = parseInt(a.match(/\d+/)?.[0] || '0');
+            const numB = parseInt(b.match(/\d+/)?.[0] || '0');
+            return numA - numB;
+        });
+    }
+    
+    // Render horizontal data table with main variable and subvariables combined
+    function renderCombinedTable(variable, unit, varId) {
+        const weeks = sortWeeks(Object.keys(variable.data));
+        
+        let html = '<div class="data-table-horizontal"><table class="horizontal-layout">';
+        
+        // Header row with checkbox column + variable name column + week labels
+        html += '<thead><tr>';
+        html += '<th>PDF</th>'; // Checkbox column header
+        html += '<th></th>'; // Empty cell for variable names column
+        weeks.forEach(week => {
+            html += `<th>${week}</th>`;
+        });
+        html += '</tr></thead><tbody>';
+        
+        // Main variable row
+        html += '<tr>';
+        html += `<td><input type="checkbox" class="pdf-select-row" data-var="${varId}" data-type="main" checked></td>`;
+        html += `<td>${trimName(variable.name)}</td>`;
+        weeks.forEach((week, index) => {
+            const value = variable.data[week];
+            const delta = calculateDelta(variable.data, weeks, index);
+            let cellContent = value !== null ? value + unit : '<span class="null-value">–</span>';
+            if (delta !== null && delta !== 0) {
+                cellContent += ' ' + formatDelta(delta, unit);
+            }
+            html += `<td>${cellContent}</td>`;
+        });
+        html += '</tr>';
+        
+        // Subvariables rows
+        if (variable.subVariables && variable.subVariables.length > 0) {
+            variable.subVariables.forEach((subVar, subIdx) => {
+                const subId = `${varId}-sub${subIdx}`;
+                html += '<tr class="subvar-row">';
+                html += `<td><input type="checkbox" class="pdf-select-row" data-var="${varId}" data-subvar="${subId}" data-type="sub" checked></td>`;
+                html += `<td>${trimName(subVar.name)}</td>`;
+                weeks.forEach((week, index) => {
+                    const value = subVar.data[week];
+                    const delta = calculateDelta(subVar.data, weeks, index);
+                    let cellContent = value !== null ? value + unit : '<span class="null-value">–</span>';
+                    if (delta !== null && delta !== 0) {
+                        cellContent += ' ' + formatDelta(delta, unit);
+                    }
+                    html += `<td>${cellContent}</td>`;
+                });
+                html += '</tr>';
+            });
+        }
+        
+        html += '</tbody></table></div>';
+        return html;
+    }
+    
+    // Create chart for variable
+    function createChart(canvasId, variable, categoryName) {
+        const ctx = document.getElementById(canvasId);
+        if (!ctx) return;
+        
+        const weeks = sortWeeks(Object.keys(variable.data));
+        const datasets = [];
+        
+        // Main variable dataset
+        datasets.push({
+            label: trimName(variable.name),
+            data: weeks.map(w => variable.data[w]),
+            borderColor: '#3498db',
+            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+            tension: 0.3,
+            borderWidth: 2,
+            pointRadius: 3
+        });
+        
+        // Subvariables datasets
+        const colors = ['#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#34495e'];
+        if (variable.subVariables && variable.subVariables.length > 0) {
+            variable.subVariables.forEach((subVar, idx) => {
+                datasets.push({
+                    label: trimName(subVar.name),
+                    data: weeks.map(w => subVar.data[w]),
+                    borderColor: colors[idx % colors.length],
+                    backgroundColor: colors[idx % colors.length] + '20',
+                    tension: 0.3,
+                    borderWidth: 2,
+                    pointRadius: 2
+                });
+            });
+        }
+        
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: weeks,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                aspectRatio: 2,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom',
+                        labels: {
+                            font: {
+                                size: 10
+                            },
+                            boxWidth: 12,
+                            padding: 8
+                        }
+                    },
+                    title: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        ticks: {
+                            font: {
+                                size: 10
+                            }
+                        }
+                        // Suggested: Add unit to axis label if needed
+                    },
+                    x: {
+                        ticks: {
+                            font: {
+                                size: 10
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        chartInstances.push(chart);
+    }
+    
+    // Render complete report
+    function renderReport(data) {
+        // Destroy existing charts
+        chartInstances.forEach(chart => chart.destroy());
+        chartInstances = [];
+        
+        const content = document.getElementById('reportContent');
+        let html = '';
+        
+        Object.keys(data).forEach(categoryKey => {
+            const category = data[categoryKey];
+            html += `<div class="category-card" data-category="${categoryKey}">`;
+            html += `<h2 class="category-title">${categoryKey}</h2>`;
+            
+            if (category.variables) {
+                category.variables.forEach((variable, varIdx) => {
+                    const varId = `${categoryKey}-${varIdx}`;
+                    const cleanName = trimName(variable.name);
+                    const unit = variable.unit || '';
+                    
+                    html += `<div class="variable-block" data-variable="${varId}">`;
+                    html += `<div class="variable-header">`;
+                    html += `<div class="variable-name">${cleanName}</div>`;
+                    html += `<div class="variable-meta">`;
+                    
+                    if (variable.tags && variable.tags.length > 0) {
+                        variable.tags.forEach(tag => {
+                            html += `<span class="tag">${tag}</span>`;
+                        });
+                    }
+                    
+                    if (unit) {
+                        html += `<span class="unit">(${unit})</span>`;
+                    }
+                    
+                    html += `</div></div>`;
+                    
+                    // Combined table with main variable and subvariables
+                    html += `<div class="data-container">`;
+                    html += `<div class="data-section">`;
+                    html += renderCombinedTable(variable, unit, varId);
+                    html += `</div>`;
+                    
+                    // Chart
+                    const chartId = `chart-${varId}`;
+                    html += `<div class="chart-container"><canvas id="${chartId}"></canvas></div>`;
+                    
+                    html += `</div>`; // Close data-container
+                    
+                    // Notes
+                    if (variable.notes && variable.notes.trim()) {
+                        html += `<div class="notes-box" data-notes="${varId}">`;
+                        html += `<div class="notes-title">📝 Opmerkingen</div>`;
+                        html += `<div class="notes-content">${variable.notes}</div>`;
+                        html += `</div>`;
+                    }
+                    
+                    html += `</div>`;
+                });
+            }
+            
+            html += `</div>`;
+        });
+        
+        content.innerHTML = html;
+        
+        // Create charts after DOM update
+        setTimeout(() => {
+            Object.keys(data).forEach(categoryKey => {
+                const category = data[categoryKey];
+                if (category.variables) {
+                    category.variables.forEach((variable, varIdx) => {
+                        const varId = `${categoryKey}-${varIdx}`;
+                        const chartId = `chart-${varId}`;
+                        createChart(chartId, variable, categoryKey);
+                        // Let charts render fully
+                    });
+                    
+                    // Small delay before PDF is ready to be generated
+                    setTimeout(() => {
+                        document.getElementById('exportBtn').disabled = false;
+                    }, 500);
+                }
+            });
+        }, 100);
+    }
+    
+    // Export to PDF with charts and selective rows - OPTIMIZED FOR FILE SIZE
+    async function exportToPDF() {
+        const btn = document.getElementById('exportBtn');
+        btn.disabled = true;
+        btn.textContent = 'PDF genereren...';
+        
+        try {
+            const { jsPDF } = window.jspdf;
+            
+            // Start PDF in 'landscape' (liggend) A4
+            const pdf = new jsPDF('landscape', 'mm', 'a4');
+            let firstPage = true;
+            
+            const blocks = document.querySelectorAll('.variable-block');
+            
+            for (const block of blocks) {
+                const varId = block.dataset.variable;
+                
+                // Check if main variable is selected
+                const mainCheckbox = block.querySelector(`input[data-var="${varId}"][data-type="main"]`);
+                if (!mainCheckbox || !mainCheckbox.checked) continue;
+                
+                // Clone and prepare element for capture
+                const clone = block.cloneNode(true);
+                
+                // Remove checkbox column and unchecked rows from table
+                const table = clone.querySelector('table');
+                if (table) {
+                    // Remove header checkbox column
+                    const headerRow = table.querySelector('thead tr');
+                    if (headerRow) {
+                        headerRow.deleteCell(0);
+                    }
+                    
+                    // Remove checkbox cells from all data rows and remove unchecked rows
+                    const rows = Array.from(table.querySelectorAll('tbody tr'));
+                    rows.forEach((row, idx) => {
+                        // Find the original checkbox status
+                        const originalCheckbox = block.querySelectorAll('tbody tr input[type="checkbox"]')[idx];
+                        
+                        if (!originalCheckbox || !originalCheckbox.checked) {
+                            row.remove();
+                            return;
+                        }
+                        
+                        // Remove the checkbox cell
+                        row.deleteCell(0);
+                    });
+                }
+                
+                // Clone the chart image data
+                const originalCanvas = block.querySelector('canvas');
+                const clonedCanvas = clone.querySelector('canvas');
+                
+                if (originalCanvas && clonedCanvas) {
+                    const ctx = clonedCanvas.getContext('2d');
+                    clonedCanvas.width = originalCanvas.width;
+                    clonedCanvas.height = originalCanvas.height;
+                    ctx.drawImage(originalCanvas, 0, 0);
+                }
+                
+                // Set temporary styles for optimal html2canvas rendering
+                clone.style.position = 'absolute';
+                clone.style.left = '-9999px';
+                clone.style.top = '0';
+                clone.style.width = '1100px'; // Set width for a good landscape fit
+                clone.style.padding = '15px';
+                clone.style.background = '#ffffff'; // Force white background
+                document.body.appendChild(clone);
+                
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+                // Capture with html2canvas - verlaagde schaal voor kleinere bestandsgrootte
+                const canvas = await html2canvas(clone, {
+                    scale: 1.2, // Verlaagd van 1.5 of 2.0 voor kleinere bestanden
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff',
+                    allowTaint: true,
+                    windowWidth: 1100,
+                    windowHeight: clone.scrollHeight
+                });
+                
+                // Remove clone from DOM
+                document.body.removeChild(clone);
+                
+                // Add page if not first
+                if (!firstPage) {
+                    pdf.addPage();
+                }
+                firstPage = false;
+                
+                // Convert canvas to JPEG to reduce file size (quality 0.8)
+                const imgData = canvas.toDataURL('image/jpeg', 0.8);
+                
+                // Calculate optimal size for A4 landscape
+                const pdfWidth = pdf.internal.pageSize.getWidth() - 20; // 10mm margin each side
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                const pageHeight = pdf.internal.pageSize.getHeight() - 20;
+                
+                if (pdfHeight <= pageHeight) {
+                    // Fits nicely, centered
+                    pdf.addImage(imgData, 'JPEG', 10, 10, pdfWidth, pdfHeight);
+                } else {
+                    // Too tall, scale down to fit height
+                    const scale = pageHeight / pdfHeight;
+                    const scaledWidth = pdfWidth * scale;
+                    const scaledHeight = pageHeight;
+                    pdf.addImage(imgData, 'JPEG', 10, 10, scaledWidth, scaledHeight);
+                }
+            }
+            
+            // Save PDF
+            pdf.save('analytics-report-optimized.pdf');
+            
+        } catch (err) {
+            alert('Fout bij PDF export: ' + err.message);
+            console.error(err);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Export naar PDF';
+        }
+    }
+    </script>
 </body>
 </html>
