@@ -10,373 +10,377 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: #f5f7fa;
+        color: #333;
+        padding: 20px;
+        line-height: 1.4;
+        font-size: 13px;
+    }
+    
+    .container {
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+    
+    header {
+        background: white;
+        padding: 20px;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    
+    h1 {
+        color: #2c3e50;
+        margin-bottom: 15px;
+        font-size: 22px;
+    }
+    
+    .file-input-group {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    
+    input[type="file"] {
+        padding: 8px;
+        border: 2px solid #ddd;
+        border-radius: 4px;
+        background: white;
+        cursor: pointer;
+        font-size: 13px;
+    }
+    
+    button {
+        padding: 8px 16px;
+        background: #3498db;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        transition: background 0.3s;
+    }
+    
+    button:hover {
+        background: #2980b9;
+    }
+    
+    button:disabled {
+        background: #bdc3c7;
+        cursor: not-allowed;
+    }
+    
+    .error {
+        background: #fee;
+        color: #c33;
+        padding: 12px;
+        border-radius: 4px;
+        margin: 12px 0;
+        border-left: 4px solid #c33;
+        font-size: 13px;
+    }
+    
+    .category-card {
+        background: white;
+        padding: 20px;
+        border-radius: 6px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        page-break-inside: avoid;
+    }
+    
+    .category-title {
+        font-size: 18px;
+        color: #2c3e50;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #3498db;
+    }
+    
+    .variable-block {
+        margin-bottom: 25px;
+        padding: 15px;
+        background: #fafbfc;
+        border-radius: 4px;
+        border-left: 3px solid #3498db;
+        page-break-inside: avoid;
+    }
+    
+    .variable-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+        gap: 12px;
+    }
+    
+    .variable-name {
+        font-size: 15px;
+        font-weight: 600;
+        color: #2c3e50;
+        flex: 1;
+    }
+    
+    .variable-meta {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+    
+    .pdf-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        color: #7f8c8d;
+    }
+    
+    .pdf-checkbox input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+        margin: 0;
+    }
+    
+    .tag {
+        background: #e8f4f8;
+        color: #2980b9;
+        padding: 3px 10px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 500;
+    }
+    
+    .unit {
+        color: #7f8c8d;
+        font-size: 12px;
+    }
+    
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+        font-size: 12px;
+    }
+    
+    .checkbox-label input {
+        cursor: pointer;
+        margin: 0;
+    }
+    
+    /* *** AANGEPASTE SECTIE VOOR VERTICALE STAPELING *** */
+    .data-container {
+        display: flex;
+        gap: 15px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        flex-direction: column; /* Zorgt ervoor dat elementen onder elkaar staan */
+        width: 100%; /* Zorgt dat de container de volle breedte inneemt */
+    }
+    
+    .data-section {
+        width: 100%; /* Zorgt dat de tabel de volle breedte inneemt */
+        margin-bottom: 15px;
+    }
+    
+    .chart-container {
+        width: 100%; /* Zorgt dat de grafiek de volle breedte inneemt */
+        max-width: none; /* Overschrijft de oude max-width van 600px */
+        padding: 10px;
+        background: white;
+        border-radius: 4px;
+    }
+    /* *** EINDE AANGEPASTE SECTIE *** */
+    
+    .data-table-horizontal {
+        display: block;
+        margin-bottom: 10px;
+        overflow-x: auto;
+    }
+    
+    table {
+        border-collapse: collapse;
+        background: white;
+        font-size: 11px;
+        width: 100%;
+    }
+    
+    table.horizontal-layout th {
+        background: #34495e;
+        color: white;
+        font-weight: 600;
+        font-size: 10px;
+        letter-spacing: 0.3px;
+        padding: 6px 10px;
+        text-align: left;
+        border-right: 1px solid #2c3e50;
+        white-space: nowrap;
+    }
+    
+    table.horizontal-layout th:first-child {
+        min-width: 50px;
+        text-align: center;
+    }
+    
+    table.horizontal-layout th:nth-child(2) {
+        min-width: 180px;
+        max-width: 200px;
+    }
+    
+    table.horizontal-layout th:nth-child(n+3) {
+        min-width: 80px;
+        max-width: 100px;
+        white-space: nowrap;
+    }
+    
+    table.horizontal-layout th:last-child {
+        border-right: none;
+    }
+    
+    table.horizontal-layout td {
+        padding: 5px 10px;
+        text-align: left;
+        border-right: 1px solid #ecf0f1;
+        border-bottom: 1px solid #ecf0f1;
+        white-space: nowrap;
+    }
+    
+    table.horizontal-layout td:first-child {
+        text-align: center;
+        background: white;
+        padding: 3px;
+    }
+    
+    table.horizontal-layout td:nth-child(2) {
+        font-weight: 500;
+        color: #2c3e50;
+        background: #f8f9fa;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    table.horizontal-layout td:nth-child(n+3) {
+        min-width: 80px;
+        max-width: 100px;
+        white-space: nowrap;
+    }
+    
+    table.horizontal-layout td input[type="checkbox"] {
+        cursor: pointer;
+        width: 16px;
+        height: 16px;
+        margin: 0;
+    }
+    
+    table.horizontal-layout td:last-child {
+        border-right: none;
+    }
+    
+    table.horizontal-layout tr:last-child td {
+        border-bottom: none;
+    }
+    
+    table.horizontal-layout .subvar-row td:nth-child(2) {
+        padding-left: 20px;
+        font-weight: 400;
+        color: #555;
+    }
+    
+    tr:hover {
+        background: #f8f9fa;
+    }
+    
+    .delta-positive {
+        color: #27ae60;
+        font-weight: 600;
+    }
+    
+    .delta-negative {
+        color: #e74c3c;
+        font-weight: 600;
+    }
+    
+    .null-value {
+        color: #95a5a6;
+        font-style: italic;
+    }
+    
+    .subvariable-block {
+        margin-left: 15px;
+        margin-top: 12px;
+        padding: 10px;
+        background: white;
+        border-radius: 4px;
+        border-left: 2px solid #95a5a6;
+        display: none; /* Hidden since subvariables are now in main table */
+    }
+    
+    .subvariable-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: #34495e;
+        margin-bottom: 8px;
+    }
+    
+    .notes-box {
+        margin-top: 12px;
+        padding: 10px;
+        background: #fffbf0;
+        border-left: 3px solid #f39c12;
+        border-radius: 4px;
+    }
+    
+    .notes-title {
+        font-weight: 600;
+        color: #d68910;
+        margin-bottom: 6px;
+        font-size: 12px;
+    }
+    
+    .notes-content {
+        color: #555;
+        font-size: 12px;
+        line-height: 1.5;
+    }
+    
+    
+    canvas {
+        max-height: 250px !important;
+    }
+    
+    .loading {
+        text-align: center;
+        padding: 15px;
+        color: #7f8c8d;
+    }
+    
+    @media print {
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f7fa;
-            color: #333;
-            padding: 20px;
-            line-height: 1.4;
-            font-size: 13px;
-        }
-        
-        .container {
-            max-width: 1600px;
-            margin: 0 auto;
-        }
-        
-        header {
             background: white;
-            padding: 20px;
-            border-radius: 6px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
         }
         
-        h1 {
-            color: #2c3e50;
-            margin-bottom: 15px;
-            font-size: 22px;
-        }
-        
-        .file-input-group {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        
-        input[type="file"] {
-            padding: 8px;
-            border: 2px solid #ddd;
-            border-radius: 4px;
-            background: white;
-            cursor: pointer;
-            font-size: 13px;
-        }
-        
-        button {
-            padding: 8px 16px;
-            background: #3498db;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 500;
-            transition: background 0.3s;
-        }
-        
-        button:hover {
-            background: #2980b9;
-        }
-        
-        button:disabled {
-            background: #bdc3c7;
-            cursor: not-allowed;
-        }
-        
-        .error {
-            background: #fee;
-            color: #c33;
-            padding: 12px;
-            border-radius: 4px;
-            margin: 12px 0;
-            border-left: 4px solid #c33;
-            font-size: 13px;
-        }
-        
-        .category-card {
-            background: white;
-            padding: 20px;
-            border-radius: 6px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+        .category-card, .variable-block {
             page-break-inside: avoid;
         }
         
-        .category-title {
-            font-size: 18px;
-            color: #2c3e50;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #3498db;
+        button, input[type="file"] {
+            display: none;
         }
-        
-        .variable-block {
-            margin-bottom: 25px;
-            padding: 15px;
-            background: #fafbfc;
-            border-radius: 4px;
-            border-left: 3px solid #3498db;
-            page-break-inside: avoid;
-        }
-        
-        .variable-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-            gap: 12px;
-        }
-        
-        .variable-name {
-            font-size: 15px;
-            font-weight: 600;
-            color: #2c3e50;
-            flex: 1;
-        }
-        
-        .variable-meta {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-        
-        .pdf-checkbox {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 11px;
-            color: #7f8c8d;
-        }
-        
-        .pdf-checkbox input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
-            margin: 0;
-        }
-        
-        .tag {
-            background: #e8f4f8;
-            color: #2980b9;
-            padding: 3px 10px;
-            border-radius: 10px;
-            font-size: 11px;
-            font-weight: 500;
-        }
-        
-        .unit {
-            color: #7f8c8d;
-            font-size: 12px;
-        }
-        
-        .checkbox-label {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        
-        .checkbox-label input {
-            cursor: pointer;
-            margin: 0;
-        }
-        
-        /* Horizontal data layout */
-        .data-container {
-            display: flex;
-            gap: 15px;
-            align-items: flex-start;
-            flex-wrap: wrap;
-        }
-        
-        .data-section {
-            flex: 1;
-            min-width: 400px;
-        }
-        
-        .data-table-horizontal {
-            display: block;
-            margin-bottom: 10px;
-            overflow-x: auto;
-        }
-        
-        table {
-            border-collapse: collapse;
-            background: white;
-            font-size: 11px;
-            width: 100%;
-        }
-        
-        table.horizontal-layout th {
-            background: #34495e;
-            color: white;
-            font-weight: 600;
-            font-size: 10px;
-            letter-spacing: 0.3px;
-            padding: 6px 10px;
-            text-align: left;
-            border-right: 1px solid #2c3e50;
-            white-space: nowrap;
-        }
-        
-        table.horizontal-layout th:first-child {
-            min-width: 50px;
-            text-align: center;
-        }
-        
-        table.horizontal-layout th:nth-child(2) {
-            min-width: 180px;
-            max-width: 200px;
-        }
-        
-        table.horizontal-layout th:nth-child(n+3) {
-            min-width: 80px;
-            max-width: 100px;
-            white-space: nowrap;
-        }
-        
-        table.horizontal-layout th:last-child {
-            border-right: none;
-        }
-        
-        table.horizontal-layout td {
-            padding: 5px 10px;
-            text-align: left;
-            border-right: 1px solid #ecf0f1;
-            border-bottom: 1px solid #ecf0f1;
-            white-space: nowrap;
-        }
-        
-        table.horizontal-layout td:first-child {
-            text-align: center;
-            background: white;
-            padding: 3px;
-        }
-        
-        table.horizontal-layout td:nth-child(2) {
-            font-weight: 500;
-            color: #2c3e50;
-            background: #f8f9fa;
-            max-width: 200px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        table.horizontal-layout td:nth-child(n+3) {
-            min-width: 80px;
-            max-width: 100px;
-            white-space: nowrap;
-        }
-        
-        table.horizontal-layout td input[type="checkbox"] {
-            cursor: pointer;
-            width: 16px;
-            height: 16px;
-            margin: 0;
-        }
-        
-        table.horizontal-layout td:last-child {
-            border-right: none;
-        }
-        
-        table.horizontal-layout tr:last-child td {
-            border-bottom: none;
-        }
-        
-        table.horizontal-layout .subvar-row td:nth-child(2) {
-            padding-left: 20px;
-            font-weight: 400;
-            color: #555;
-        }
-        
-        tr:hover {
-            background: #f8f9fa;
-        }
-        
-        .delta-positive {
-            color: #27ae60;
-            font-weight: 600;
-        }
-        
-        .delta-negative {
-            color: #e74c3c;
-            font-weight: 600;
-        }
-        
-        .null-value {
-            color: #95a5a6;
-            font-style: italic;
-        }
-        
-        .subvariable-block {
-            margin-left: 15px;
-            margin-top: 12px;
-            padding: 10px;
-            background: white;
-            border-radius: 4px;
-            border-left: 2px solid #95a5a6;
-            display: none; /* Hidden since subvariables are now in main table */
-        }
-        
-        .subvariable-name {
-            font-size: 13px;
-            font-weight: 600;
-            color: #34495e;
-            margin-bottom: 8px;
-        }
-        
-        .notes-box {
-            margin-top: 12px;
-            padding: 10px;
-            background: #fffbf0;
-            border-left: 3px solid #f39c12;
-            border-radius: 4px;
-        }
-        
-        .notes-title {
-            font-weight: 600;
-            color: #d68910;
-            margin-bottom: 6px;
-            font-size: 12px;
-        }
-        
-        .notes-content {
-            color: #555;
-            font-size: 12px;
-            line-height: 1.5;
-        }
-        
-        .chart-container {
-            flex: 1;
-            max-width: 600px;
-            padding: 10px;
-            background: white;
-            border-radius: 4px;
-        }
-        
-        canvas {
-            max-height: 250px !important;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 15px;
-            color: #7f8c8d;
-        }
-        
-        @media print {
-            body {
-                background: white;
-            }
-            
-            .category-card, .variable-block {
-                page-break-inside: avoid;
-            }
-            
-            button, input[type="file"] {
-                display: none;
-            }
-        }
-    </style>
+    }
+</style>
 </head>
 <body>
     <div class="container">
