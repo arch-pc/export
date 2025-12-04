@@ -180,29 +180,29 @@
         margin: 0;
     }
 
-    /* *** AANGEPASTE SECTIE VOOR VERTICALE STAPELING *** */
+    /* *** SECTIE VOOR VERTICALE STAPELING *** */
     .data-container {
         display: flex;
         gap: 15px;
         align-items: flex-start;
         flex-wrap: wrap;
-        flex-direction: column; /* Zorgt ervoor dat elementen onder elkaar staan */
-        width: 100%; /* Zorgt dat de container de volle breedte inneemt */
+        flex-direction: column; 
+        width: 100%; 
     }
 
     .data-section {
-        width: 100%; /* Zorgt dat de tabel de volle breedte inneemt */
+        width: 100%; /* Maakt de tabel-sectie 100% breed */
         margin-bottom: 15px;
     }
 
     .chart-container {
-        width: 100%; /* Zorgt dat de grafiek de volle breedte inneemt */
-        max-width: none; /* Overschrijft de oude max-width van 600px */
+        width: 100%; /* Maakt de grafiek-sectie 100% breed */
+        max-width: none; 
         padding: 10px;
         background: white;
         border-radius: 4px;
     }
-    /* *** EINDE AANGEPASTE SECTIE *** */
+    /* *** EINDE VERTICALE STAPELING *** */
 
     .data-table-horizontal {
         display: block;
@@ -210,16 +210,13 @@
         overflow-x: auto;
     }
 
+    /* *** TABEL STIJLEN VOOR VOLLE BREEDTE EN FLEXIBELE KOLOMMEN *** */
     table {
         border-collapse: collapse;
         background: white;
         font-size: 11px;
-        width: 100%;
-    }
-
-    /* *** START AANGEPASTE TABEL STIJL VOOR JUISTE UITLIJNING - AANGEPAST *** */
-    table.horizontal-layout {
-        table-layout: fixed; /* Dwingt de browser om de breedtes te respecteren */
+        width: 100%; /* **CRUCIAAL:** Tabel is 100% breed */
+        table-layout: auto; /* Zorgt voor flexibele kolombreedtes */
     }
 
     table.horizontal-layout th {
@@ -231,25 +228,32 @@
         padding: 6px 10px;
         text-align: center;
         border-right: 1px solid #2c3e50;
-        white-space: normal; /* Toestaan van tekstterugloop */
+        white-space: normal;
         overflow: hidden;
     }
 
+    /* 1. PDF Kolom */
     table.horizontal-layout th:first-child {
-        width: 50px; /* Vaste breedte voor de PDF-selectiekolom */
+        width: 50px; /* Vaste breedte */
+        min-width: 50px;
         text-align: center;
     }
 
+    /* 2. Variabele Naam Kolom */
     table.horizontal-layout th:nth-child(2) {
-        width: 250px; /* Ruimere vaste breedte voor de naamkolom (past zich NIET aan de inhoud aan) */
-        text-align: left; /* Naamkolom links uitlijnen */
-        white-space: normal; /* Zorgt ervoor dat de tekst niet wordt afgeknipt, maar doorloopt */
+        width: 20%; /* Naamkolom gebruikt 20% van de breedte */
+        min-width: 150px; 
+        max-width: 250px;
+        text-align: left;
+        white-space: normal;
     }
 
+    /* 3. Data Kolommen (de rest) */
     table.horizontal-layout th:nth-child(n+3) {
-        width: auto; /* De rest van de ruimte wordt gelijkmatig over deze kolommen verdeeld */
-        text-align: right; /* Data kolommen rechts uitlijnen */
-        white-space: nowrap; /* Weeklabels op één regel */
+        width: auto; /* De rest van de ruimte wordt verdeeld */
+        min-width: 80px; 
+        text-align: right;
+        white-space: nowrap; 
     }
 
     table.horizontal-layout th:last-child {
@@ -258,38 +262,42 @@
 
     table.horizontal-layout td {
         padding: 5px 10px;
-        text-align: right; /* Standaard data rechts uitlijnen */
+        text-align: right;
         border-right: 1px solid #ecf0f1;
         border-bottom: 1px solid #ecf0f1;
         white-space: nowrap;
         overflow: visible;
     }
 
+    /* 1. PDF Kolom (Data) */
     table.horizontal-layout td:first-child {
         text-align: center;
         background: white;
         padding: 3px;
-        width: 50px;
+        width: 50px; /* Vaste breedte */
     }
 
+    /* 2. Variabele Naam Kolom (Data) */
     table.horizontal-layout td:nth-child(2) {
         font-weight: 500;
         color: #2c3e50;
         background: #f8f9fa;
-        width: 250px; /* Zelfde vaste breedte als de header */
-        overflow: visible;
-        text-overflow: clip;
-        text-align: left; /* Naamkolom links uitlijnen */
-        white-space: normal; /* Zorgt dat de tekst terugloopt en niet wordt afgeknipt */
+        width: 20%; /* Moet matchen met de header */
+        max-width: 250px;
+        text-align: left;
+        white-space: normal;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
+    /* 3. Data Kolommen (Data) */
     table.horizontal-layout td:nth-child(n+3) {
-        width: auto; /* De rest van de ruimte wordt gelijkmatig over deze kolommen verdeeld */
-        white-space: nowrap; /* Zorgen dat data rechts uitgelijnd blijft */
+        width: auto;
+        white-space: nowrap;
         text-align: right;
     }
-    /* *** EINDE AANGEPASTE TABEL STIJL *** */
-
+    /* *** EINDE TABEL STIJLEN *** */
+    
     table.horizontal-layout td input[type="checkbox"] {
         cursor: pointer;
         width: 16px;
@@ -329,24 +337,7 @@
         color: #95a5a6;
         font-style: italic;
     }
-
-    .subvariable-block {
-        margin-left: 15px;
-        margin-top: 12px;
-        padding: 10px;
-        background: white;
-        border-radius: 4px;
-        border-left: 2px solid #95a5a6;
-        display: none; /* Hidden since subvariables are now in main table */
-    }
-
-    .subvariable-name {
-        font-size: 13px;
-        font-weight: 600;
-        color: #34495e;
-        margin-bottom: 8px;
-    }
-
+    
     .notes-box {
         margin-top: 12px;
         padding: 10px;
@@ -367,7 +358,6 @@
         font-size: 12px;
         line-height: 1.5;
     }
-
 
     canvas {
         max-height: 250px !important;
