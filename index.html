@@ -749,174 +749,162 @@
         }, 100);
     }
   
-    // Export to PDF with charts and selective rows - OPTIMIZED FOR FILE SIZE
-    async function exportToPDF() {
-        const btn = document.getElementById('exportBtn');
-        btn.disabled = true;
-        btn.textContent = 'PDF genereren...';
+// Export to PDF with charts and selective rows - OPTIMIZED FOR FILE SIZE
+async function exportToPDF() {
+    const btn = document.getElementById('exportBtn');
+    btn.disabled = true;
+    btn.textContent = 'PDF genereren...';
+  
+    try {
+        const { jsPDF } = window.jspdf;
       
-        try {
-            const { jsPDF } = window.jspdf;
+        // Start PDF in 'landscape' (liggend) A4
+        const pdf = new jsPDF('landscape', 'mm', 'a4');
+        let firstPage = true;
+      
+        const blocks = document.querySelectorAll('.variable-block');
+      
+        for (const block of blocks) {
+            const varId = block.dataset.variable;
           
-            // Start PDF in 'landscape' (liggend) A4
-            const pdf = new jsPDF('landscape', 'mm', 'a4');
-            let firstPage = true;
+            // Clone and prepare element for capture
+            const clone = block.cloneNode(true);
           
-            const blocks = document.querySelectorAll('.variable-block');
-          
-            for (const block of blocks) {
-                const varId = block.dataset.variable;
+            // Remove checkbox column from table (but keep ALL rows)
+            const table = clone.querySelector('table');
+            if (table) {
+                // Remove header checkbox column
+                const headerRow = table.querySelector('thead tr');
+                if (headerRow) {
+                    headerRow.deleteCell(0);
+                }
               
-                // Check if main variable is selected
-                const mainCheckbox = block.querySelector(`input[data-var="${varId}"][data-type="main"]`);
-                if (!mainCheckbox || !mainCheckbox.checked) continue;
-              
-                // Clone and prepare element for capture
-                const clone = block.cloneNode(true);
-              
-                // Remove checkbox column and unchecked rows from table
-                const table = clone.querySelector('table');
-                if (table) {
-                    // Remove header checkbox column
-                    const headerRow = table.querySelector('thead tr');
-                    if (headerRow) {
-                        headerRow.deleteCell(0);
+                // Remove checkbox cells from all data rows (but KEEP all rows)
+                const rows = Array.from(table.querySelectorAll('tbody tr'));
+                rows.forEach((row) => {
+                    // Verwijder alleen de checkbox cel, niet de hele rij
+                    const cellToDelete = row.cells[0]; 
+                    if (cellToDelete) {
+                        cellToDelete.remove();
                     }
-                  
-                    // Remove checkbox cells from all data rows and remove unchecked rows
-                    const rows = Array.from(table.querySelectorAll('tbody tr'));
-                    rows.forEach((row, idx) => {
-                        // Find the original checkbox status
-                        const originalCheckbox = block.querySelectorAll('tbody tr input[type="checkbox"]')[idx];
-                      
-                        if (!originalCheckbox || !originalCheckbox.checked) {
-                            row.remove();
-                            return;
-                        }
-                      
-                        // De cellen zijn nu in de kloon
-                        const cellToDelete = row.cells[0]; 
-                        if (cellToDelete) {
-                            cellToDelete.remove();
-                        }
+                });
+
+                // **CRUCIALE FIX VOOR DE PDF EXPORT: DIRECTE STIJL INJECTIE**
+                const tableClone = clone.querySelector('table.horizontal-layout');
+                if (tableClone) {
+                    // Header cells aanpassen
+                    const headerCell = tableClone.querySelector('thead tr th:nth-child(1)');
+                    if (headerCell) {
+                        headerCell.style.width = '180px';
+                        headerCell.style.minWidth = '180px';
+                        headerCell.style.maxWidth = '180px';
+                        headerCell.style.textAlign = 'left';
+                    }
+
+                    // Data kolommen headers kleiner maken
+                    const dataHeaders = tableClone.querySelectorAll('thead tr th:not(:first-child)');
+                    dataHeaders.forEach(header => {
+                        header.style.width = '70px';
+                        header.style.minWidth = '70px';
+                        header.style.textAlign = 'right';
                     });
 
-                    // **CRUCIALE FIX VOOR DE PDF EXPORT: DIRECTE STIJL INJECTIE**
-                    const tableClone = clone.querySelector('table.horizontal-layout');
-                    if (tableClone) {
-                        // Header cells aanpassen
-                        const headerCell = tableClone.querySelector('thead tr th:nth-child(1)');
-                        if (headerCell) {
-                            headerCell.style.width = '180px';
-                            headerCell.style.minWidth = '180px';
-                            headerCell.style.maxWidth = '180px';
-                            headerCell.style.textAlign = 'left';
+                    // Data cells aanpassen
+                    tableClone.querySelectorAll('tbody tr').forEach(row => {
+                        const nameCell = row.querySelector('td:nth-child(1)');
+                        if (nameCell) {
+                            nameCell.style.paddingLeft = row.classList.contains('subvar-row') ? '20px' : '10px';
+                            nameCell.style.textAlign = 'left';
+                            nameCell.style.width = '180px';
+                            nameCell.style.minWidth = '180px';
+                            nameCell.style.maxWidth = '180px';
+                            nameCell.style.whiteSpace = 'normal';
                         }
 
-                        // Data kolommen headers kleiner maken
-                        const dataHeaders = tableClone.querySelectorAll('thead tr th:not(:first-child)');
-                        dataHeaders.forEach(header => {
-                            header.style.width = '70px';
-                            header.style.minWidth = '70px';
-                            header.style.textAlign = 'right';
-                        });
-
-                        // Data cells aanpassen
-                        tableClone.querySelectorAll('tbody tr').forEach(row => {
-                            const nameCell = row.querySelector('td:nth-child(1)');
-                            if (nameCell) {
-                                nameCell.style.paddingLeft = row.classList.contains('subvar-row') ? '20px' : '10px';
-                                nameCell.style.textAlign = 'left';
-                                nameCell.style.width = '180px';
-                                nameCell.style.minWidth = '180px';
-                                nameCell.style.maxWidth = '180px';
-                                nameCell.style.whiteSpace = 'normal';
-                            }
-
-                            // Alle andere cellen (data) - kleiner en rechts uitgelijnd
-                            for (let i = 1; i < row.cells.length; i++) {
-                                row.cells[i].style.width = '70px';
-                                row.cells[i].style.minWidth = '70px';
-                                row.cells[i].style.textAlign = 'right';
-                            }
-                        });
-                    }
-                }
-              
-                // Clone the chart image data
-                const originalCanvas = block.querySelector('canvas');
-                const clonedCanvas = clone.querySelector('canvas');
-              
-                if (originalCanvas && clonedCanvas) {
-                    // De grafiek is al geüpdatet met de juiste selectie door de updateChart-functie
-                    const ctx = clonedCanvas.getContext('2d');
-                    clonedCanvas.width = originalCanvas.width;
-                    clonedCanvas.height = originalCanvas.height;
-                    ctx.drawImage(originalCanvas, 0, 0);
-                }
-              
-                // Set temporary styles for optimal html2canvas rendering
-                clone.style.position = 'absolute';
-                clone.style.left = '-9999px';
-                clone.style.top = '0';
-                clone.style.width = '1100px'; // Set width for a good landscape fit
-                clone.style.padding = '15px';
-                clone.style.background = '#ffffff'; // Force white background
-                document.body.appendChild(clone);
-              
-                await new Promise(resolve => setTimeout(resolve, 200));
-              
-                // Capture with html2canvas - verlaagde schaal voor kleinere bestandsgrootte
-                const canvas = await html2canvas(clone, {
-                    scale: 1.2, // Verlaagd van 1.5 of 2.0 voor kleinere bestanden
-                    useCORS: true,
-                    logging: false,
-                    backgroundColor: '#ffffff',
-                    allowTaint: true,
-                    windowWidth: 1100,
-                    windowHeight: clone.scrollHeight
-                });
-              
-                // Remove clone from DOM
-                document.body.removeChild(clone);
-              
-                // Add page if not first
-                if (!firstPage) {
-                    pdf.addPage();
-                }
-                firstPage = false;
-              
-                // Convert canvas to JPEG to reduce file size (quality 0.8)
-                const imgData = canvas.toDataURL('image/jpeg', 0.8);
-              
-                // Calculate optimal size for A4 landscape
-                const pdfWidth = pdf.internal.pageSize.getWidth() - 20; // 10mm margin each side
-                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                const pageHeight = pdf.internal.pageSize.getHeight() - 20;
-              
-                if (pdfHeight <= pageHeight) {
-                    // Fits nicely, centered
-                    pdf.addImage(imgData, 'JPEG', 10, 10, pdfWidth, pdfHeight);
-                } else {
-                    // Too tall, scale down to fit height
-                    const scale = pageHeight / pdfHeight;
-                    const scaledWidth = pdfWidth * scale;
-                    const scaledHeight = pageHeight;
-                    pdf.addImage(imgData, 'JPEG', 10, 10, scaledWidth, scaledHeight);
+                        // Alle andere cellen (data) - kleiner en rechts uitgelijnd
+                        for (let i = 1; i < row.cells.length; i++) {
+                            row.cells[i].style.width = '70px';
+                            row.cells[i].style.minWidth = '70px';
+                            row.cells[i].style.textAlign = 'right';
+                        }
+                    });
                 }
             }
           
-            // Save PDF
-            pdf.save('analytics-report-optimized.pdf');
+            // Clone the chart image data
+            const originalCanvas = block.querySelector('canvas');
+            const clonedCanvas = clone.querySelector('canvas');
           
-        } catch (err) {
-            alert('Fout bij PDF export: ' + err.message);
-            console.error(err);
-        } finally {
-            btn.disabled = false;
-            btn.textContent = 'Export naar PDF';
+            if (originalCanvas && clonedCanvas) {
+                // De grafiek is al geüpdatet met de juiste selectie door de updateChart-functie
+                const ctx = clonedCanvas.getContext('2d');
+                clonedCanvas.width = originalCanvas.width;
+                clonedCanvas.height = originalCanvas.height;
+                ctx.drawImage(originalCanvas, 0, 0);
+            }
+          
+            // Set temporary styles for optimal html2canvas rendering
+            clone.style.position = 'absolute';
+            clone.style.left = '-9999px';
+            clone.style.top = '0';
+            clone.style.width = '1100px'; // Set width for a good landscape fit
+            clone.style.padding = '15px';
+            clone.style.background = '#ffffff'; // Force white background
+            document.body.appendChild(clone);
+          
+            await new Promise(resolve => setTimeout(resolve, 200));
+          
+            // Capture with html2canvas - verlaagde schaal voor kleinere bestandsgrootte
+            const canvas = await html2canvas(clone, {
+                scale: 1.2, // Verlaagd van 1.5 of 2.0 voor kleinere bestanden
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff',
+                allowTaint: true,
+                windowWidth: 1100,
+                windowHeight: clone.scrollHeight
+            });
+          
+            // Remove clone from DOM
+            document.body.removeChild(clone);
+          
+            // Add page if not first
+            if (!firstPage) {
+                pdf.addPage();
+            }
+            firstPage = false;
+          
+            // Convert canvas to JPEG to reduce file size (quality 0.8)
+            const imgData = canvas.toDataURL('image/jpeg', 0.8);
+          
+            // Calculate optimal size for A4 landscape
+            const pdfWidth = pdf.internal.pageSize.getWidth() - 20; // 10mm margin each side
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            const pageHeight = pdf.internal.pageSize.getHeight() - 20;
+          
+            if (pdfHeight <= pageHeight) {
+                // Fits nicely, centered
+                pdf.addImage(imgData, 'JPEG', 10, 10, pdfWidth, pdfHeight);
+            } else {
+                // Too tall, scale down to fit height
+                const scale = pageHeight / pdfHeight;
+                const scaledWidth = pdfWidth * scale;
+                const scaledHeight = pageHeight;
+                pdf.addImage(imgData, 'JPEG', 10, 10, scaledWidth, scaledHeight);
+            }
         }
+      
+        // Save PDF
+        pdf.save('analytics-report-optimized.pdf');
+      
+    } catch (err) {
+        alert('Fout bij PDF export: ' + err.message);
+        console.error(err);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Export naar PDF';
     }
+}
 </script>
 </body>
 </html>
