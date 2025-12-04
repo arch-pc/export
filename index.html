@@ -191,12 +191,12 @@
     }
 
     .data-section {
-        width: 100%; /* Maakt de tabel-sectie 100% breed */
+        width: 100%; 
         margin-bottom: 15px;
     }
 
     .chart-container {
-        width: 100%; /* Maakt de grafiek-sectie 100% breed */
+        width: 100%; 
         max-width: none; 
         padding: 10px;
         background: white;
@@ -215,8 +215,8 @@
         border-collapse: collapse;
         background: white;
         font-size: 11px;
-        width: 100%; /* **CRUCIAAL:** Tabel is 100% breed */
-        table-layout: auto; /* Zorgt voor flexibele kolombreedtes */
+        width: 100%; 
+        table-layout: auto; 
     }
 
     table.horizontal-layout th {
@@ -234,23 +234,23 @@
 
     /* 1. PDF Kolom */
     table.horizontal-layout th:first-child {
-        width: 50px; /* Vaste breedte */
+        width: 50px; 
         min-width: 50px;
         text-align: center;
     }
 
-    /* 2. Variabele Naam Kolom */
+    /* 2. Variabele Naam Kolom - NU 30% */
     table.horizontal-layout th:nth-child(2) {
-        width: 20%; /* Naamkolom gebruikt 20% van de breedte */
-        min-width: 150px; 
-        max-width: 250px;
+        width: 30%; /* Gebruik 30% van de breedte voor de naam */
+        min-width: 250px; 
+        max-width: 350px;
         text-align: left;
         white-space: normal;
     }
 
-    /* 3. Data Kolommen (de rest) */
+    /* 3. Data Kolommen (de rest) - NU VASTE KLEINE BREEDTE */
     table.horizontal-layout th:nth-child(n+3) {
-        width: auto; /* De rest van de ruimte wordt verdeeld */
+        width: 80px; /* Geef alle datakolommen een vaste, kleine breedte */
         min-width: 80px; 
         text-align: right;
         white-space: nowrap; 
@@ -274,25 +274,26 @@
         text-align: center;
         background: white;
         padding: 3px;
-        width: 50px; /* Vaste breedte */
+        width: 50px; 
     }
 
-    /* 2. Variabele Naam Kolom (Data) */
+    /* 2. Variabele Naam Kolom (Data) - NU 30% */
     table.horizontal-layout td:nth-child(2) {
         font-weight: 500;
         color: #2c3e50;
         background: #f8f9fa;
-        width: 20%; /* Moet matchen met de header */
-        max-width: 250px;
+        width: 30%; /* Moet matchen met de header */
+        max-width: 350px;
         text-align: left;
         white-space: normal;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
-    /* 3. Data Kolommen (Data) */
+    /* 3. Data Kolommen (Data) - NU VASTE KLEINE BREEDTE */
     table.horizontal-layout td:nth-child(n+3) {
-        width: auto;
+        width: 80px; /* Vaste, kleine breedte */
+        min-width: 80px;
         white-space: nowrap;
         text-align: right;
     }
@@ -801,18 +802,20 @@
                         }
                     });
 
-                    // **NIEUWE CODE**: Fix de uitlijning in de kloon door de CSS aan te passen
-                    // Dit richt zich op de tweede kolom (naam van de variabele)
-                    const tableClone = clone.querySelector('table.horizontal-layout');
-                    if(tableClone) {
-                        const style = document.createElement('style');
-                        style.textContent = `
-                            .horizontal-layout th:nth-child(1) { min-width: 180px; max-width: 200px; } /* Naam kolom is nu de 1e kolom */
-                            .horizontal-layout td:nth-child(1) { padding-left: 10px; text-align: left; background: #f8f9fa; max-width: 200px; }
-                            .subvar-row td:nth-child(1) { padding-left: 20px; }
-                        `;
-                        clone.appendChild(style);
-                    }
+const tableClone = clone.querySelector('table.horizontal-layout');
+if(tableClone) {
+    const style = document.createElement('style');
+    style.textContent = `
+        /* AANPASSING VOOR PDF: Naamkolom is nu de 1e kolom en moet 30% breed zijn */
+        .horizontal-layout th:nth-child(1) { width: 30%; min-width: 250px; max-width: 350px; text-align: left; } 
+        .horizontal-layout td:nth-child(1) { padding-left: 10px; text-align: left; background: #f8f9fa; width: 30%; max-width: 350px; white-space: normal; }
+        .subvar-row td:nth-child(1) { padding-left: 20px; }
+        /* Data kolommen (nu 2e kolom en verder) krijgen de vaste, kleine breedte */
+        .horizontal-layout th:nth-child(n+2) { width: 80px; min-width: 80px; } 
+        .horizontal-layout td:nth-child(n+2) { width: 80px; min-width: 80px; }
+    `;
+    clone.appendChild(style);
+}
 
                 }
                 
