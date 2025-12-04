@@ -463,13 +463,17 @@
         return `<span class="${className}">${sign}${delta}${unit}</span>`;
     }
     
-    // Natural sort for week labels
+    // Natural sort for week labels - **WIJZIGING** (Beter sorteren + week 5 uitsluiten)
     function sortWeeks(weeks) {
-        return weeks.sort((a, b) => {
+        const sorted = weeks.sort((a, b) => {
+            // Extraheren van het weeknummer (bijv. 1 uit 'week 1')
             const numA = parseInt(a.match(/\d+/)?.[0] || '0');
             const numB = parseInt(b.match(/\d+/)?.[0] || '0');
             return numA - numB;
         });
+        
+        // **NIEUWE CODE**: Filter week 5 uit de gesorteerde lijst
+        return sorted.filter(week => !week.toLowerCase().includes('week 5'));
     }
     
     // Render horizontal data table with main variable and subvariables combined
@@ -730,16 +734,15 @@
                 }
             });
 
-            // *** NIEUW: Event listener toevoegen voor alle checkboxes ***
+            // Event listener toevoegen voor alle checkboxes
             document.querySelectorAll('.pdf-select-row').forEach(checkbox => {
                 checkbox.addEventListener('change', (e) => {
                     const varId = e.target.dataset.var;
                     const chartId = `chart-${varId}`;
                     // Update de grafiek met de nieuwe selectie
-                    updateChart(chartId, jsonData, varId); 
+                    updateChart(chartId, jsonData, varId);	
                 });
             });
-            // *** EINDE NIEUW ***
 
         }, 100);
     }
@@ -789,9 +792,26 @@
                             return;
                         }
                         
-                        // Remove the checkbox cell
-                        row.deleteCell(0);
+                        // **WIJZIGING**: De cellen zijn nu in de kloon
+                        const cellToDelete = row.cells[0]; 
+                        if (cellToDelete) {
+                            cellToDelete.remove();
+                        }
                     });
+
+                    // **NIEUWE CODE**: Fix de uitlijning in de kloon door de CSS aan te passen
+                    // Dit richt zich op de tweede kolom (naam van de variabele)
+                    const tableClone = clone.querySelector('table.horizontal-layout');
+                    if(tableClone) {
+                        const style = document.createElement('style');
+                        style.textContent = `
+                            .horizontal-layout th:nth-child(1) { min-width: 180px; max-width: 200px; } /* Naam kolom is nu de 1e kolom */
+                            .horizontal-layout td:nth-child(1) { padding-left: 10px; text-align: left; background: #f8f9fa; max-width: 200px; }
+                            .subvar-row td:nth-child(1) { padding-left: 20px; }
+                        `;
+                        clone.appendChild(style);
+                    }
+
                 }
                 
                 // Clone the chart image data
