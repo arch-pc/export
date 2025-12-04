@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analytics Report Dashboard</title>
-    
+    
         <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
+    
 <style>
     * {
         margin: 0;
@@ -112,8 +112,8 @@
         margin-bottom: 25px;
         padding: 15px;
         background: #fafbfc;
-        border-radius: 4px;
         border-left: 3px solid #3498db;
+        border-radius: 4px;
         page-break-inside: avoid;
     }
 
@@ -185,18 +185,18 @@
         gap: 15px;
         align-items: flex-start;
         flex-wrap: wrap;
-        flex-direction: column; 
-        width: 100%; 
+        flex-direction: column; 
+        width: 100%; 
     }
 
     .data-section {
-        width: 100%; 
+        width: 100%; 
         margin-bottom: 15px;
     }
 
     .chart-container {
-        width: 100%; 
-        max-width: none; 
+        width: 100%; 
+        max-width: none; 
         padding: 10px;
         background: white;
         border-radius: 4px;
@@ -214,8 +214,8 @@
         border-collapse: collapse;
         background: white;
         font-size: 11px;
-        width: 100%; 
-        table-layout: auto; 
+        width: 100%; 
+        table-layout: fixed; /* AANPASSING */
     }
 
     table.horizontal-layout th {
@@ -233,26 +233,26 @@
 
     /* 1. PDF Kolom */
     table.horizontal-layout th:first-child {
-        width: 50px; 
+        width: 5%;  /* AANPASSING */
         min-width: 50px;
         text-align: center;
     }
 
-    /* 2. Variabele Naam Kolom - NU 30% (BREED) */
+    /* 2. Variabele Naam Kolom - NU 25% (BREED) */
     table.horizontal-layout th:nth-child(2) {
-        width: 30%; /* Gebruik 30% van de breedte voor de naam */
-        min-width: 250px; 
+        width: 25%; /* AANPASSING */
+        min-width: 200px; 
         max-width: 350px;
         text-align: left;
         white-space: normal;
     }
 
-    /* 3. Data Kolommen (de rest) - NU VASTE KLEINE BREEDTE */
+    /* 3. Data Kolommen (de rest) - NU FLEXIBELE BREEDTE */
     table.horizontal-layout th:nth-child(n+3) {
-        width: 80px; /* Geef alle datakolommen een vaste, kleine breedte */
-        min-width: 80px; 
+        width: auto; /* AANPASSING */
+        min-width: 80px; 
         text-align: right;
-        white-space: nowrap; 
+        white-space: nowrap; 
     }
 
     table.horizontal-layout th:last-child {
@@ -273,15 +273,15 @@
         text-align: center;
         background: white;
         padding: 3px;
-        width: 50px; 
+        width: 5%;  /* AANPASSING */
     }
 
-    /* 2. Variabele Naam Kolom (Data) - NU 30% (BREED) */
+    /* 2. Variabele Naam Kolom (Data) - NU 25% (BREED) */
     table.horizontal-layout td:nth-child(2) {
         font-weight: 500;
         color: #2c3e50;
         background: #f8f9fa;
-        width: 30%; /* Moet matchen met de header */
+        width: 25%; /* AANPASSING */
         max-width: 350px;
         text-align: left;
         white-space: normal;
@@ -289,15 +289,15 @@
         text-overflow: ellipsis;
     }
 
-    /* 3. Data Kolommen (Data) - NU VASTE KLEINE BREEDTE */
+    /* 3. Data Kolommen (Data) - NU FLEXIBELE BREEDTE */
     table.horizontal-layout td:nth-child(n+3) {
-        width: 80px; /* Vaste, kleine breedte */
+        width: auto; /* AANPASSING */
         min-width: 80px;
         white-space: nowrap;
         text-align: right;
     }
     /* *** EINDE TABEL STIJLEN *** */
-    
+    
     table.horizontal-layout td input[type="checkbox"] {
         cursor: pointer;
         width: 16px;
@@ -337,7 +337,7 @@
         color: #95a5a6;
         font-style: italic;
     }
-    
+    
     .notes-box {
         margin-top: 12px;
         padding: 10px;
@@ -394,7 +394,7 @@
             </div>
             <div id="errorMsg"></div>
         </header>
-        
+        
         <div id="reportContent"></div>
     </div>
 
@@ -402,12 +402,12 @@
     // Global data store
     let jsonData = null;
     let chartInstances = [];
-    
+    
     // File input handler
     document.getElementById('fileInput').addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        
+        
         const reader = new FileReader();
         reader.onload = (event) => {
             try {
@@ -421,31 +421,31 @@
         };
         reader.readAsText(file);
     });
-    
+    
     // Export button handler
     document.getElementById('exportBtn').addEventListener('click', () => {
         exportToPDF();
     });
-    
+    
     // Show error message
     function showError(msg) {
         document.getElementById('errorMsg').innerHTML = `<div class="error">${msg}</div>`;
         document.getElementById('reportContent').innerHTML = '';
         document.getElementById('exportBtn').disabled = true;
     }
-    
+    
     // Trim whitespace from variable names
     function trimName(name) {
         return name.replace(/\s+/g, ' ').trim();
     }
-    
+    
     // Calculate delta between current and previous non-null value
     function calculateDelta(data, weeks, currentIndex) {
         if (currentIndex === 0) return null;
-        
+        
         const currentValue = data[weeks[currentIndex]];
         if (currentValue === null) return null;
-        
+        
         // Find previous non-null value
         for (let i = currentIndex - 1; i >= 0; i--) {
             const prevValue = data[weeks[i]];
@@ -453,10 +453,10 @@
                 return currentValue - prevValue;
             }
         }
-        
+        
         return null; // First non-null value
     }
-    
+    
     // Format delta for display
     function formatDelta(delta, unit) {
         if (delta === null) return '';
@@ -464,7 +464,7 @@
         const className = delta >= 0 ? 'delta-positive' : 'delta-negative';
         return `<span class="${className}">${sign}${delta}${unit}</span>`;
     }
-    
+    
     // Natural sort for week labels - **WIJZIGING** (Beter sorteren + week 5 uitsluiten)
     function sortWeeks(weeks) {
         const sorted = weeks.sort((a, b) => {
@@ -473,17 +473,17 @@
             const numB = parseInt(b.match(/\d+/)?.[0] || '0');
             return numA - numB;
         });
-        
+        
         // **NIEUWE CODE**: Filter week 5 uit de gesorteerde lijst
         return sorted.filter(week => !week.toLowerCase().includes('week 5'));
     }
-    
+    
     // Render horizontal data table with main variable and subvariables combined
     function renderCombinedTable(variable, unit, varId) {
         const weeks = sortWeeks(Object.keys(variable.data));
-        
+        
         let html = '<div class="data-table-horizontal"><table class="horizontal-layout">';
-        
+        
         // Header row with checkbox column + variable name column + week labels
         html += '<thead><tr>';
         html += '<th>PDF</th>'; // Checkbox column header
@@ -492,7 +492,7 @@
             html += `<th>${week}</th>`;
         });
         html += '</tr></thead><tbody>';
-        
+        
         // Main variable row
         html += '<tr>';
         html += `<td><input type="checkbox" class="pdf-select-row" data-var="${varId}" data-type="main" checked></td>`;
@@ -507,7 +507,7 @@
             html += `<td>${cellContent}</td>`;
         });
         html += '</tr>';
-        
+        
         // Subvariables rows
         if (variable.subVariables && variable.subVariables.length > 0) {
             variable.subVariables.forEach((subVar, subIdx) => {
@@ -527,18 +527,18 @@
                 html += '</tr>';
             });
         }
-        
+        
         html += '</tbody></table></div>';
         return html;
     }
-    
+    
     // Create chart for variable
     function createChart(canvasId, variable, categoryName) {
         const ctx = document.getElementById(canvasId);
         if (!ctx) return;
-        
+        
         const weeks = sortWeeks(Object.keys(variable.data));
-        
+        
         const chart = new Chart(ctx, {
             type: 'line',
             data: {
@@ -584,7 +584,7 @@
                 }
             }
         });
-        
+        
         chartInstances.push(chart);
 
         // Laad de initiële data na het aanmaken van de Chart.js instantie
@@ -651,56 +651,56 @@
         chart.data.datasets = newDatasets;
         chart.update();
     }
-    
+    
     // Render complete report
     function renderReport(data) {
         // Destroy existing charts
         chartInstances.forEach(chart => chart.destroy());
         chartInstances = [];
-        
+        
         const content = document.getElementById('reportContent');
         let html = '';
-        
+        
         Object.keys(data).forEach(categoryKey => {
             const category = data[categoryKey];
             html += `<div class="category-card" data-category="${categoryKey}">`;
             html += `<h2 class="category-title">${categoryKey}</h2>`;
-            
+            
             if (category.variables) {
                 category.variables.forEach((variable, varIdx) => {
                     const varId = `${categoryKey}-${varIdx}`;
                     const cleanName = trimName(variable.name);
                     const unit = variable.unit || '';
-                    
+                    
                     html += `<div class="variable-block" data-variable="${varId}">`;
                     html += `<div class="variable-header">`;
                     html += `<div class="variable-name">${cleanName}</div>`;
                     html += `<div class="variable-meta">`;
-                    
+                    
                     if (variable.tags && variable.tags.length > 0) {
                         variable.tags.forEach(tag => {
                             html += `<span class="tag">${tag}</span>`;
                         });
                     }
-                    
+                    
                     if (unit) {
                         html += `<span class="unit">(${unit})</span>`;
                     }
-                    
+                    
                     html += `</div></div>`;
-                    
+                    
                     // Combined table with main variable and subvariables
                     html += `<div class="data-container">`;
                     html += `<div class="data-section">`;
                     html += renderCombinedTable(variable, unit, varId);
                     html += `</div>`;
-                    
+                    
                     // Chart
                     const chartId = `chart-${varId}`;
                     html += `<div class="chart-container"><canvas id="${chartId}"></canvas></div>`;
-                    
+                    
                     html += `</div>`; // Close data-container
-                    
+                    
                     // Notes
                     if (variable.notes && variable.notes.trim()) {
                         html += `<div class="notes-box" data-notes="${varId}">`;
@@ -708,16 +708,16 @@
                         html += `<div class="notes-content">${variable.notes}</div>`;
                         html += `</div>`;
                     }
-                    
+                    
                     html += `</div>`;
                 });
             }
-            
+            
             html += `</div>`;
         });
-        
+        
         content.innerHTML = html;
-        
+        
         // Create charts after DOM update
         setTimeout(() => {
             Object.keys(data).forEach(categoryKey => {
@@ -728,7 +728,7 @@
                         const chartId = `chart-${varId}`;
                         createChart(chartId, variable, categoryKey);
                     });
-                    
+                    
                     // Small delay before PDF is ready to be generated
                     setTimeout(() => {
                         document.getElementById('exportBtn').disabled = false;
@@ -742,38 +742,38 @@
                     const varId = e.target.dataset.var;
                     const chartId = `chart-${varId}`;
                     // Update de grafiek met de nieuwe selectie
-                    updateChart(chartId, jsonData, varId);    
+                    updateChart(chartId, jsonData, varId);    
                 });
             });
 
         }, 100);
     }
-    
+    
     // Export to PDF with charts and selective rows - OPTIMIZED FOR FILE SIZE
     async function exportToPDF() {
         const btn = document.getElementById('exportBtn');
         btn.disabled = true;
         btn.textContent = 'PDF genereren...';
-        
+        
         try {
             const { jsPDF } = window.jspdf;
-            
+            
             // Start PDF in 'landscape' (liggend) A4
             const pdf = new jsPDF('landscape', 'mm', 'a4');
             let firstPage = true;
-            
+            
             const blocks = document.querySelectorAll('.variable-block');
-            
+            
             for (const block of blocks) {
                 const varId = block.dataset.variable;
-                
+                
                 // Check if main variable is selected
                 const mainCheckbox = block.querySelector(`input[data-var="${varId}"][data-type="main"]`);
                 if (!mainCheckbox || !mainCheckbox.checked) continue;
-                
+                
                 // Clone and prepare element for capture
                 const clone = block.cloneNode(true);
-                
+                
                 // Remove checkbox column and unchecked rows from table
                 const table = clone.querySelector('table');
                 if (table) {
@@ -782,20 +782,20 @@
                     if (headerRow) {
                         headerRow.deleteCell(0);
                     }
-                    
+                    
                     // Remove checkbox cells from all data rows and remove unchecked rows
                     const rows = Array.from(table.querySelectorAll('tbody tr'));
                     rows.forEach((row, idx) => {
                         // Find the original checkbox status
                         const originalCheckbox = block.querySelectorAll('tbody tr input[type="checkbox"]')[idx];
-                        
+                        
                         if (!originalCheckbox || !originalCheckbox.checked) {
                             row.remove();
                             return;
                         }
-                        
+                        
                         // **WIJZIGING**: De cellen zijn nu in de kloon
-                        const cellToDelete = row.cells[0]; 
+                        const cellToDelete = row.cells[0]; 
                         if (cellToDelete) {
                             cellToDelete.remove();
                         }
@@ -806,23 +806,23 @@ const tableClone = clone.querySelector('table.horizontal-layout');
 if(tableClone) {
     const style = document.createElement('style');
     style.textContent = `
-        /* AANPASSING VOOR PDF: Naamkolom is nu de 1e kolom en moet 30% breed zijn */
-        .horizontal-layout th:nth-child(1) { width: 30%; min-width: 250px; max-width: 350px; text-align: left; } 
-        .horizontal-layout td:nth-child(1) { padding-left: 10px; text-align: left; background: #f8f9fa; width: 30%; max-width: 350px; white-space: normal; }
+        /* AANPASSING VOOR PDF: Naamkolom is nu de 1e kolom en moet 25% breed zijn */
+        .horizontal-layout th:nth-child(1) { width: 25%; min-width: 200px; max-width: 350px; text-align: left; } 
+        .horizontal-layout td:nth-child(1) { padding-left: 10px; text-align: left; background: #f8f9fa; width: 25%; max-width: 350px; white-space: normal; }
         .subvar-row td:nth-child(1) { padding-left: 20px; }
-        /* Data kolommen (nu 2e kolom en verder) krijgen de vaste, kleine breedte */
-        .horizontal-layout th:nth-child(n+2) { width: 80px; min-width: 80px; } 
-        .horizontal-layout td:nth-child(n+2) { width: 80px; min-width: 80px; }
+        /* Data kolommen (nu 2e kolom en verder) krijgen de FLEXIBELE breedte */
+        .horizontal-layout th:nth-child(n+2) { width: auto; min-width: 80px; } 
+        .horizontal-layout td:nth-child(n+2) { width: auto; min-width: 80px; }
     `;
     clone.appendChild(style);
 }
 
                 }
-                
+                
                 // Clone the chart image data
                 const originalCanvas = block.querySelector('canvas');
                 const clonedCanvas = clone.querySelector('canvas');
-                
+                
                 if (originalCanvas && clonedCanvas) {
                     // De grafiek is al geüpdatet met de juiste selectie door de updateChart-functie
                     const ctx = clonedCanvas.getContext('2d');
@@ -830,7 +830,7 @@ if(tableClone) {
                     clonedCanvas.height = originalCanvas.height;
                     ctx.drawImage(originalCanvas, 0, 0);
                 }
-                
+                
                 // Set temporary styles for optimal html2canvas rendering
                 clone.style.position = 'absolute';
                 clone.style.left = '-9999px';
@@ -839,9 +839,9 @@ if(tableClone) {
                 clone.style.padding = '15px';
                 clone.style.background = '#ffffff'; // Force white background
                 document.body.appendChild(clone);
-                
+                
                 await new Promise(resolve => setTimeout(resolve, 200));
-                
+                
                 // Capture with html2canvas - verlaagde schaal voor kleinere bestandsgrootte
                 const canvas = await html2canvas(clone, {
                     scale: 1.2, // Verlaagd van 1.5 of 2.0 voor kleinere bestanden
@@ -852,24 +852,24 @@ if(tableClone) {
                     windowWidth: 1100,
                     windowHeight: clone.scrollHeight
                 });
-                
+                
                 // Remove clone from DOM
                 document.body.removeChild(clone);
-                
+                
                 // Add page if not first
                 if (!firstPage) {
                     pdf.addPage();
                 }
                 firstPage = false;
-                
+                
                 // Convert canvas to JPEG to reduce file size (quality 0.8)
                 const imgData = canvas.toDataURL('image/jpeg', 0.8);
-                
+                
                 // Calculate optimal size for A4 landscape
                 const pdfWidth = pdf.internal.pageSize.getWidth() - 20; // 10mm margin each side
                 const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
                 const pageHeight = pdf.internal.pageSize.getHeight() - 20;
-                
+                
                 if (pdfHeight <= pageHeight) {
                     // Fits nicely, centered
                     pdf.addImage(imgData, 'JPEG', 10, 10, pdfWidth, pdfHeight);
@@ -881,10 +881,10 @@ if(tableClone) {
                     pdf.addImage(imgData, 'JPEG', 10, 10, scaledWidth, scaledHeight);
                 }
             }
-            
+            
             // Save PDF
             pdf.save('analytics-report-optimized.pdf');
-            
+            
         } catch (err) {
             alert('Fout bij PDF export: ' + err.message);
             console.error(err);
