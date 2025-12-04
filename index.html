@@ -217,6 +217,7 @@
         width: 100%;
     }
     
+    /* *** START AANGEPASTE TABEL STIJL VOOR JUISTE UITLIJNING *** */
     table.horizontal-layout th {
         background: #34495e;
         color: white;
@@ -224,7 +225,7 @@
         font-size: 10px;
         letter-spacing: 0.3px;
         padding: 6px 10px;
-        text-align: left;
+        text-align: center; /* Standaard tekstuitlijning gecentreerd */
         border-right: 1px solid #2c3e50;
         white-space: nowrap;
     }
@@ -237,12 +238,14 @@
     table.horizontal-layout th:nth-child(2) {
         min-width: 180px;
         max-width: 200px;
+        text-align: left; /* Naamkolom links uitlijnen */
     }
     
     table.horizontal-layout th:nth-child(n+3) {
         min-width: 80px;
         max-width: 100px;
         white-space: nowrap;
+        text-align: right; /* Data kolommen rechts uitlijnen */
     }
     
     table.horizontal-layout th:last-child {
@@ -251,7 +254,7 @@
     
     table.horizontal-layout td {
         padding: 5px 10px;
-        text-align: left;
+        text-align: right; /* Standaard data rechts uitlijnen */
         border-right: 1px solid #ecf0f1;
         border-bottom: 1px solid #ecf0f1;
         white-space: nowrap;
@@ -270,13 +273,16 @@
         max-width: 200px;
         overflow: hidden;
         text-overflow: ellipsis;
+        text-align: left; /* Naamkolom links uitlijnen */
     }
     
     table.horizontal-layout td:nth-child(n+3) {
         min-width: 80px;
         max-width: 100px;
         white-space: nowrap;
+        text-align: right; /* Zorgen dat data rechts uitgelijnd blijft */
     }
+    /* *** EINDE AANGEPASTE TABEL STIJL *** */
     
     table.horizontal-layout td input[type="checkbox"] {
         cursor: pointer;
