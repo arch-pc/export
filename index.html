@@ -10,378 +10,378 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
 <style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
 
-    body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background: #f5f7fa;
-        color: #333;
-        padding: 20px;
-        line-height: 1.4;
-        font-size: 13px;
-    }
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: #f5f7fa;
+        color: #333;
+        padding: 20px;
+        line-height: 1.4;
+        font-size: 13px;
+    }
 
-    .container {
-        max-width: 1600px;
-        margin: 0 auto;
-    }
+    .container {
+        max-width: 1600px;
+        margin: 0 auto;
+    }
 
-    header {
-        background: white;
-        padding: 20px;
-        border-radius: 6px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        margin-bottom: 20px;
-    }
+    header {
+        background: white;
+        padding: 20px;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
 
-    h1 {
-        color: #2c3e50;
-        margin-bottom: 15px;
-        font-size: 22px;
-    }
+    h1 {
+        color: #2c3e50;
+        margin-bottom: 15px;
+        font-size: 22px;
+    }
 
-    .file-input-group {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex-wrap: wrap;
-    }
+    .file-input-group {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
 
-    input[type="file"] {
-        padding: 8px;
-        border: 2px solid #ddd;
-        border-radius: 4px;
-        background: white;
-        cursor: pointer;
-        font-size: 13px;
-    }
+    input[type="file"] {
+        padding: 8px;
+        border: 2px solid #ddd;
+        border-radius: 4px;
+        background: white;
+        cursor: pointer;
+        font-size: 13px;
+    }
 
-    button {
-        padding: 8px 16px;
-        background: #3498db;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 13px;
-        font-weight: 500;
-        transition: background 0.3s;
-    }
+    button {
+        padding: 8px 16px;
+        background: #3498db;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        transition: background 0.3s;
+    }
 
-    button:hover {
-        background: #2980b9;
-    }
+    button:hover {
+        background: #2980b9;
+    }
 
-    button:disabled {
-        background: #bdc3c7;
-        cursor: not-allowed;
-    }
+    button:disabled {
+        background: #bdc3c7;
+        cursor: not-allowed;
+    }
 
-    .error {
-        background: #fee;
-        color: #c33;
-        padding: 12px;
-        border-radius: 4px;
-        margin: 12px 0;
-        border-left: 4px solid #c33;
-        font-size: 13px;
-    }
+    .error {
+        background: #fee;
+        color: #c33;
+        padding: 12px;
+        border-radius: 4px;
+        margin: 12px 0;
+        border-left: 4px solid #c33;
+        font-size: 13px;
+    }
 
-    .category-card {
-        background: white;
-        padding: 20px;
-        border-radius: 6px;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-        margin-bottom: 20px;
-        page-break-inside: avoid;
-    }
+    .category-card {
+        background: white;
+        padding: 20px;
+        border-radius: 6px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        page-break-inside: avoid;
+    }
 
-    .category-title {
-        font-size: 18px;
-        color: #2c3e50;
-        margin-bottom: 15px;
-        padding-bottom: 10px;
-        border-bottom: 2px solid #3498db;
-    }
+    .category-title {
+        font-size: 18px;
+        color: #2c3e50;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #3498db;
+    }
 
-    .variable-block {
-        margin-bottom: 25px;
-        padding: 15px;
-        background: #fafbfc;
-        border-left: 3px solid #3498db;
-        border-radius: 4px;
-        page-break-inside: avoid;
-    }
+    .variable-block {
+        margin-bottom: 25px;
+        padding: 15px;
+        background: #fafbfc;
+        border-left: 3px solid #3498db;
+        border-radius: 4px;
+        page-break-inside: avoid;
+    }
 
-    .variable-header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 10px;
-        gap: 12px;
-    }
+    .variable-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+        gap: 12px;
+    }
 
-    .variable-name {
-        font-size: 15px;
-        font-weight: 600;
-        color: #2c3e50;
-        flex: 1;
-    }
+    .variable-name {
+        font-size: 15px;
+        font-weight: 600;
+        color: #2c3e50;
+        flex: 1;
+    }
 
-    .variable-meta {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-    }
+    .variable-meta {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
 
-    .pdf-checkbox {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 11px;
-        color: #7f8c8d;
-    }
+    .pdf-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        color: #7f8c8d;
+    }
 
-    .pdf-checkbox input[type="checkbox"] {
-        width: 16px;
-        height: 16px;
-        cursor: pointer;
-        margin: 0;
-    }
+    .pdf-checkbox input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+        margin: 0;
+    }
 
-    .tag {
-        background: #e8f4f8;
-        color: #2980b9;
-        padding: 3px 10px;
-        border-radius: 10px;
-        font-size: 11px;
-        font-weight: 500;
-    }
+    .tag {
+        background: #e8f4f8;
+        color: #2980b9;
+        padding: 3px 10px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 500;
+    }
 
-    .unit {
-        color: #7f8c8d;
-        font-size: 12px;
-    }
+    .unit {
+        color: #7f8c8d;
+        font-size: 12px;
+    }
 
-    .checkbox-label {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        cursor: pointer;
-        font-size: 12px;
-    }
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+        font-size: 12px;
+    }
 
-    .checkbox-label input {
-        cursor: pointer;
-        margin: 0;
-    }
+    .checkbox-label input {
+        cursor: pointer;
+        margin: 0;
+    }
 
-    /* *** SECTIE VOOR VERTICALE STAPELING *** */
-    .data-container {
-        display: flex;
-        gap: 15px;
-        align-items: flex-start;
-        flex-wrap: wrap;
-        flex-direction: column; 
-        width: 100%; 
-    }
+    /* VERTICALE STAPELING */
+    .data-container {
+        display: flex;
+        gap: 15px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        flex-direction: column; 
+        width: 100%; 
+    }
 
-    .data-section {
-        width: 100%; 
-        margin-bottom: 15px;
-    }
+    .data-section {
+        width: 100%; 
+        margin-bottom: 15px;
+    }
 
-    .chart-container {
-        width: 100%; 
-        max-width: none; 
-        padding: 10px;
-        background: white;
-        border-radius: 4px;
-    }
-    /* *** EINDE VERTICALE STAPELING *** */
+    .chart-container {
+        width: 100%; 
+        max-width: none; 
+        padding: 10px;
+        background: white;
+        border-radius: 4px;
+    }
+    /* EINDE VERTICALE STAPELING */
 
-    .data-table-horizontal {
-        display: block;
-        margin-bottom: 10px;
-        overflow-x: auto;
-    }
+    .data-table-horizontal {
+        display: block;
+        margin-bottom: 10px;
+        overflow-x: auto;
+    }
 
-    /* *** TABEL STIJLEN VOOR VOLLE BREEDTE EN FLEXIBELE KOLOMMEN *** */
-    table {
-        border-collapse: collapse;
-        background: white;
-        font-size: 11px;
-        width: 100%; 
-        table-layout: fixed; /* AANPASSING */
-    }
+    /* TABEL STIJLEN VOOR VOLLE BREEDTE EN FLEXIBELE KOLOMMEN */
+    table {
+        border-collapse: collapse;
+        background: white;
+        font-size: 11px;
+        width: 100%; 
+        table-layout: fixed;
+    }
 
-    table.horizontal-layout th {
-        background: #34495e;
-        color: white;
-        font-weight: 600;
-        font-size: 10px;
-        letter-spacing: 0.3px;
-        padding: 6px 10px;
-        text-align: center;
-        border-right: 1px solid #2c3e50;
-        white-space: normal;
-        overflow: hidden;
-    }
+    table.horizontal-layout th {
+        background: #34495e;
+        color: white;
+        font-weight: 600;
+        font-size: 10px;
+        letter-spacing: 0.3px;
+        padding: 6px 10px;
+        text-align: center;
+        border-right: 1px solid #2c3e50;
+        white-space: normal;
+        overflow: hidden;
+    }
 
-    /* 1. PDF Kolom */
-    table.horizontal-layout th:first-child {
-        width: 5%;  /* AANPASSING */
-        min-width: 50px;
-        text-align: center;
-    }
+    /* 1. PDF Kolom */
+    table.horizontal-layout th:first-child {
+        width: 5%;
+        min-width: 50px;
+        text-align: center;
+    }
 
-    /* 2. Variabele Naam Kolom - NU 25% (BREED) */
-    table.horizontal-layout th:nth-child(2) {
-        width: 25%; /* AANPASSING */
-        min-width: 200px; 
-        max-width: 350px;
-        text-align: left;
-        white-space: normal;
-    }
+    /* 2. Variabele Naam Kolom - 25% BREEDTE */
+    table.horizontal-layout th:nth-child(2) {
+        width: 25%;
+        min-width: 200px; 
+        max-width: 350px;
+        text-align: left;
+        white-space: normal;
+    }
 
-    /* 3. Data Kolommen (de rest) - NU FLEXIBELE BREEDTE */
-    table.horizontal-layout th:nth-child(n+3) {
-        width: auto; /* AANPASSING */
-        min-width: 80px; 
-        text-align: right;
-        white-space: nowrap; 
-    }
+    /* 3. Data Kolommen - FLEXIBELE BREEDTE */
+    table.horizontal-layout th:nth-child(n+3) {
+        width: auto;
+        min-width: 80px; 
+        text-align: right;
+        white-space: nowrap; 
+    }
 
-    table.horizontal-layout th:last-child {
-        border-right: none;
-    }
+    table.horizontal-layout th:last-child {
+        border-right: none;
+    }
 
-    table.horizontal-layout td {
-        padding: 5px 10px;
-        text-align: right;
-        border-right: 1px solid #ecf0f1;
-        border-bottom: 1px solid #ecf0f1;
-        white-space: nowrap;
-        overflow: visible;
-    }
+    table.horizontal-layout td {
+        padding: 5px 10px;
+        text-align: right;
+        border-right: 1px solid #ecf0f1;
+        border-bottom: 1px solid #ecf0f1;
+        white-space: nowrap;
+        overflow: visible;
+    }
 
-    /* 1. PDF Kolom (Data) */
-    table.horizontal-layout td:first-child {
-        text-align: center;
-        background: white;
-        padding: 3px;
-        width: 5%;  /* AANPASSING */
-    }
+    /* 1. PDF Kolom (Data) */
+    table.horizontal-layout td:first-child {
+        text-align: center;
+        background: white;
+        padding: 3px;
+        width: 5%;
+    }
 
-    /* 2. Variabele Naam Kolom (Data) - NU 25% (BREED) */
-    table.horizontal-layout td:nth-child(2) {
-        font-weight: 500;
-        color: #2c3e50;
-        background: #f8f9fa;
-        width: 25%; /* AANPASSING */
-        max-width: 350px;
-        text-align: left;
-        white-space: normal;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
+    /* 2. Variabele Naam Kolom (Data) - 25% BREEDTE */
+    table.horizontal-layout td:nth-child(2) {
+        font-weight: 500;
+        color: #2c3e50;
+        background: #f8f9fa;
+        width: 25%;
+        max-width: 350px;
+        text-align: left;
+        white-space: normal;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 
-    /* 3. Data Kolommen (Data) - NU FLEXIBELE BREEDTE */
-    table.horizontal-layout td:nth-child(n+3) {
-        width: auto; /* AANPASSING */
-        min-width: 80px;
-        white-space: nowrap;
-        text-align: right;
-    }
-    /* *** EINDE TABEL STIJLEN *** */
-    
-    table.horizontal-layout td input[type="checkbox"] {
-        cursor: pointer;
-        width: 16px;
-        height: 16px;
-        margin: 0;
-    }
+    /* 3. Data Kolommen (Data) - FLEXIBELE BREEDTE */
+    table.horizontal-layout td:nth-child(n+3) {
+        width: auto;
+        min-width: 80px;
+        white-space: nowrap;
+        text-align: right;
+    }
+    /* EINDE TABEL STIJLEN */
+    
+    table.horizontal-layout td input[type="checkbox"] {
+        cursor: pointer;
+        width: 16px;
+        height: 16px;
+        margin: 0;
+    }
 
-    table.horizontal-layout td:last-child {
-        border-right: none;
-    }
+    table.horizontal-layout td:last-child {
+        border-right: none;
+    }
 
-    table.horizontal-layout tr:last-child td {
-        border-bottom: none;
-    }
+    table.horizontal-layout tr:last-child td {
+        border-bottom: none;
+    }
 
-    table.horizontal-layout .subvar-row td:nth-child(2) {
-        padding-left: 20px;
-        font-weight: 400;
-        color: #555;
-    }
+    table.horizontal-layout .subvar-row td:nth-child(2) {
+        padding-left: 20px;
+        font-weight: 400;
+        color: #555;
+    }
 
-    tr:hover {
-        background: #f8f9fa;
-    }
+    tr:hover {
+        background: #f8f9fa;
+    }
 
-    .delta-positive {
-        color: #27ae60;
-        font-weight: 600;
-    }
+    .delta-positive {
+        color: #27ae60;
+        font-weight: 600;
+    }
 
-    .delta-negative {
-        color: #e74c3c;
-        font-weight: 600;
-    }
+    .delta-negative {
+        color: #e74c3c;
+        font-weight: 600;
+    }
 
-    .null-value {
-        color: #95a5a6;
-        font-style: italic;
-    }
-    
-    .notes-box {
-        margin-top: 12px;
-        padding: 10px;
-        background: #fffbf0;
-        border-left: 3px solid #f39c12;
-        border-radius: 4px;
-    }
+    .null-value {
+        color: #95a5a6;
+        font-style: italic;
+    }
+    
+    .notes-box {
+        margin-top: 12px;
+        padding: 10px;
+        background: #fffbf0;
+        border-left: 3px solid #f39c12;
+        border-radius: 4px;
+    }
 
-    .notes-title {
-        font-weight: 600;
-        color: #d68910;
-        margin-bottom: 6px;
-        font-size: 12px;
-    }
+    .notes-title {
+        font-weight: 600;
+        color: #d68910;
+        margin-bottom: 6px;
+        font-size: 12px;
+    }
 
-    .notes-content {
-        color: #555;
-        font-size: 12px;
-        line-height: 1.5;
-    }
+    .notes-content {
+        color: #555;
+        font-size: 12px;
+        line-height: 1.5;
+    }
 
-    canvas {
-        max-height: 250px !important;
-    }
+    canvas {
+        max-height: 250px !important;
+    }
 
-    .loading {
-        text-align: center;
-        padding: 15px;
-        color: #7f8c8d;
-    }
+    .loading {
+        text-align: center;
+        padding: 15px;
+        color: #7f8c8d;
+    }
 
-    @media print {
-        body {
-            background: white;
-        }
+    @media print {
+        body {
+            background: white;
+        }
 
-        .category-card, .variable-block {
-            page-break-inside: avoid;
-        }
+        .category-card, .variable-block {
+            page-break-inside: avoid;
+        }
 
-        button, input[type="file"] {
-            display: none;
-        }
-    }
+        button, input[type="file"] {
+            display: none;
+        }
+    }
 </style>
 </head>
 <body>
