@@ -465,18 +465,35 @@
         return `<span class="${className}">${sign}${delta}${unit}</span>`;
     }
   
-    // Natural sort for week labels - **WIJZIGING** (Beter sorteren + week 5 uitsluiten)
-    function sortWeeks(weeks) {
-        const sorted = weeks.sort((a, b) => {
-            // Extraheren van het weeknummer (bijv. 1 uit 'week 1')
-            const numA = parseInt(a.match(/\d+/)?.[0] || '0');
-            const numB = parseInt(b.match(/\d+/)?.[0] || '0');
-            return numA - numB;
+
+// Aanname: jsonData bevat de volledige JSON, inclusief dateMappings
+let jsonData = null; // Dit moet worden gevuld bij het laden van de JSON
+
+function sortWeeks(weeks) {
+    // 1. Sorteer op weeknummer (om te garanderen dat de volgorde klopt)
+    const sorted = weeks.sort((a, b) => {
+        const numA = parseInt(a.match(/\d+/)?.[0] || '0');
+        const numB = parseInt(b.match(/\d+/)?.[0] || '0');
+        return numA - numB;
+    });
+
+    // 2. Filter week 5 uit (zoals u al deed, als de waarde 'null' is)
+    const filtered = sorted.filter(week => !week.toLowerCase().includes('week 5'));
+    
+    // 3. Koppel de datumreeks eraan vast
+    if (jsonData && jsonData.dateMappings) {
+        return filtered.map(weekLabel => {
+            const dateRange = jsonData.dateMappings[weekLabel];
+            if (dateRange) {
+                // Dit is de nieuwe, gecombineerde label die in de grafiek/tabel komt
+                return `${weekLabel}: ${dateRange}`; 
+            }
+            return weekLabel; 
         });
-      
-        // **NIEUWE CODE**: Filter week 5 uit de gesorteerde lijst
-        return sorted.filter(week => !week.toLowerCase().includes('week 5'));
     }
+
+    return filtered;
+}
   
     // Render horizontal data table with main variable and subvariables combined
     function renderCombinedTable(variable, unit, varId) {
