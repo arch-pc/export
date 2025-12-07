@@ -646,232 +646,234 @@
             }, 100);
         }
         
-        // Export to PDF with charts and selective rows - NU ZONDER EMOJI'S IN PDF
-        async function exportToPDF() {
-            const btn = document.getElementById('exportBtn');
-            btn.disabled = true;
-            btn.textContent = 'PDF genereren...';
+// Export to PDF met gefixeerde opmaak van de eerste pagina
+async function exportToPDF() {
+    const btn = document.getElementById('exportBtn');
+    btn.disabled = true;
+    btn.textContent = 'PDF genereren...';
+    
+    try {
+        const { jsPDF } = window.jspdf;
+        
+        // Start PDF in 'landscape' (liggend) A4
+        const pdf = new jsPDF('landscape', 'mm', 'a4');
+        let yPos = 15;
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const pageMargin = 10;
+        
+        // --- 1. RAPPORTAGE METADATA PAGINA ---
+        
+        const companyName = document.getElementById('companyName').value.trim();
+        const reportDate = document.getElementById('reportDate').value.trim();
+        const reportNotes = document.getElementById('reportNotes').value.trim();
+        
+        // Titel van het Rapport
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(44, 62, 80); 
+        pdf.setFontSize(22);
+        pdf.text('Rapportage Dashboard', pageMargin, yPos); 
+        yPos += 15; 
+        
+        // Horizontale lijn om de metadata te scheiden van de inhoud
+        pdf.setDrawColor(52, 152, 219); 
+        pdf.setLineWidth(1);
+        pdf.line(pageMargin, yPos, pdf.internal.pageSize.getWidth() - pageMargin, yPos);
+        yPos += 10; // Extra ruimte na de blauwe lijn
+        
+        // Algemene Stijl voor Metadata Labels
+        const labelWidth = 50; // BREEDTE VERGROOT VAN 40 NAAR 50
+        pdf.setFontSize(13);
+        
+        // 2. Bedrijfsnaam
+        if (companyName) {
+            pdf.setFont('helvetica', 'bold');
+            pdf.setTextColor(52, 73, 94);
+            pdf.text('Bedrijfsnaam:', pageMargin, yPos);
             
-            try {
-                const { jsPDF } = window.jspdf; 
-                
-                const pdf = new jsPDF('landscape', 'mm', 'a4');
-                let yPos = 15;
-                const pageHeight = pdf.internal.pageSize.getHeight();
-                const pageMargin = 10;
-                
-                // --- 1. RAPPORTAGE METADATA PAGINA ---
-                
-                const companyName = document.getElementById('companyName').value.trim();
-                const reportDate = document.getElementById('reportDate').value.trim();
-                const reportNotes = document.getElementById('reportNotes').value.trim();
-                
-                // Titel van het Rapport (nu pure tekst)
-                pdf.setFont('helvetica', 'bold');
-                pdf.setTextColor(44, 62, 80); 
-                pdf.setFontSize(22);
-                pdf.text('Rapportage Dashboard', pageMargin, yPos); 
-                yPos += 15; 
-                
-                // Horizontale lijn om de metadata te scheiden van de inhoud
-                pdf.setDrawColor(52, 152, 219); 
-                pdf.setLineWidth(1);
-                pdf.line(pageMargin, yPos, pdf.internal.pageSize.getWidth() - pageMargin, yPos);
-                yPos += 8;
-                
-                // Algemene Stijl voor Metadata Labels
-                const labelWidth = 40;
-                pdf.setFontSize(13);
-                
-                // 2. Bedrijfsnaam
-                if (companyName) {
-                    pdf.setFont('helvetica', 'bold');
-                    pdf.setTextColor(52, 73, 94); 
-                    pdf.text('Bedrijfsnaam:', pageMargin, yPos);
-                    
-                    pdf.setFont('helvetica', 'normal');
-                    pdf.setTextColor(51, 51, 51); 
-                    pdf.text(companyName, pageMargin + labelWidth, yPos);
-                    yPos += 8;
-                }
-
-                // 3. Datum
-                if (reportDate) {
-                    pdf.setFont('helvetica', 'bold');
-                    pdf.setTextColor(52, 73, 94);
-                    pdf.text('Rapportagedatum:', pageMargin, yPos);
-                    
-                    pdf.setFont('helvetica', 'normal');
-                    pdf.setTextColor(51, 51, 51);
-                    pdf.text(reportDate, pageMargin + labelWidth, yPos);
-                    yPos += 12; 
-                }
-                
-                // 4. Opmerkingen/Toelichting
-                if (reportNotes) {
-                    pdf.setFontSize(14);
-                    pdf.setFont('helvetica', 'bold');
-                    pdf.setTextColor(243, 156, 18);
-                    // De titel is nu pure tekst
-                    pdf.text('Algemene Toelichting:', pageMargin, yPos); 
-                    yPos += 8;
-                    
-                    pdf.setFontSize(11);
-                    pdf.setFont('helvetica', 'normal');
-                    pdf.setTextColor(85, 85, 85);
-                    
-                    const maxTextWidth = pdf.internal.pageSize.getWidth() - (2 * pageMargin);
-                    const splitNotes = pdf.splitTextToSize(reportNotes, maxTextWidth);
-                    
-                    const boxPadding = 3;
-                    const lineHeight = 5;
-                    const boxHeight = (splitNotes.length * lineHeight) + (2 * boxPadding);
-                    
-                    pdf.setFillColor(255, 251, 240); 
-                    pdf.rect(pageMargin, yPos - boxPadding, maxTextWidth, boxHeight, 'F');
-                    
-                    pdf.setFillColor(243, 156, 18); 
-                    pdf.rect(pageMargin, yPos - boxPadding, 3, boxHeight, 'F');
-                    
-                    pdf.setTextColor(51, 51, 51);
-                    pdf.text(splitNotes, pageMargin + 5, yPos + 1.5); 
-                    yPos += boxHeight + 8;
-                }
-                
-                yPos += 10;
-
-                // Horizontale lijn om de metadata af te sluiten
-                pdf.setDrawColor(204, 204, 204); 
-                pdf.setLineWidth(0.5);
-                pdf.line(pageMargin, yPos, pdf.internal.pageSize.getWidth() - pageMargin, yPos);
-                yPos += 10;
-                
-                // --- 2. RAPPORTAGE INHOUD (Grafieken en Tabellen) ---
-
-                const blocks = document.querySelectorAll('.variable-block');
-                
-                for (const block of blocks) {
-                    const varId = block.dataset.variable;
-                    
-                    const clone = block.cloneNode(true);
-                    
-                    const table = clone.querySelector('table');
-                    if (table) {
-                        const headerRow = table.querySelector('thead tr');
-                        if (headerRow) {
-                            headerRow.deleteCell(0);
-                        }
-                        
-                        const rows = Array.from(table.querySelectorAll('tbody tr'));
-                        rows.forEach((row) => {
-                            const cellToDelete = row.cells[0]; 
-                            if (cellToDelete) {
-                                cellToDelete.remove();
-                            }
-                        });
-
-                        // Directe Stijl Injectie voor optimale html2canvas rendering van de tabel
-                        const tableClone = clone.querySelector('table.horizontal-layout');
-                        if (tableClone) {
-                            const headerCell = tableClone.querySelector('thead tr th:nth-child(1)');
-                            if (headerCell) {
-                                headerCell.style.width = '180px';
-                                headerCell.style.minWidth = '180px';
-                                headerCell.style.maxWidth = '180px';
-                                headerCell.style.textAlign = 'left';
-                            }
-
-                            const dataHeaders = tableClone.querySelectorAll('thead tr th:not(:first-child)');
-                            dataHeaders.forEach(header => {
-                                header.style.width = '70px';
-                                header.style.minWidth = '70px';
-                                header.style.textAlign = 'right';
-                            });
-
-                            tableClone.querySelectorAll('tbody tr').forEach(row => {
-                                const nameCell = row.querySelector('td:nth-child(1)');
-                                if (nameCell) {
-                                    nameCell.style.paddingLeft = row.classList.contains('subvar-row') ? '20px' : '10px';
-                                    nameCell.style.textAlign = 'left';
-                                    nameCell.style.width = '180px';
-                                    nameCell.style.minWidth = '180px';
-                                    nameCell.style.maxWidth = '180px';
-                                    nameCell.style.whiteSpace = 'normal';
-                                }
-
-                                for (let i = 1; i < row.cells.length; i++) {
-                                    row.cells[i].style.width = '70px';
-                                    row.cells[i].style.minWidth = '70px';
-                                    row.cells[i].style.textAlign = 'right';
-                                }
-                            });
-                        }
-                    }
-                    
-                    // Clone the chart image data
-                    const originalCanvas = block.querySelector('canvas');
-                    const clonedCanvas = clone.querySelector('canvas');
-                    
-                    if (originalCanvas && clonedCanvas) {
-                        const ctx = clonedCanvas.getContext('2d');
-                        clonedCanvas.width = originalCanvas.width;
-                        clonedCanvas.height = originalCanvas.height;
-                        ctx.drawImage(originalCanvas, 0, 0);
-                    }
-                    
-                    // Set temporary styles for optimal html2canvas rendering
-                    clone.style.position = 'absolute';
-                    clone.style.left = '-9999px';
-                    clone.style.top = '0';
-                    clone.style.width = '1100px'; 
-                    clone.style.padding = '15px';
-                    clone.style.background = '#ffffff'; 
-                    document.body.appendChild(clone);
-                    
-                    await new Promise(resolve => setTimeout(resolve, 200));
-                    
-                    // Capture with html2canvas 
-                    const canvas = await html2canvas(clone, {
-                        scale: 1.2, 
-                        useCORS: true,
-                        logging: false,
-                        backgroundColor: '#ffffff',
-                        allowTaint: true,
-                        windowWidth: 1100,
-                        windowHeight: clone.scrollHeight
-                    });
-                    
-                    // Remove clone from DOM
-                    document.body.removeChild(clone);
-                    
-                    // Calculate optimal size for A4 landscape
-                    const pdfWidth = pdf.internal.pageSize.getWidth() - (2 * pageMargin); 
-                    const imgData = canvas.toDataURL('image/jpeg', 0.8);
-                    const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-                    
-                    if (yPos + imgHeight > pageHeight - pageMargin) {
-                        pdf.addPage();
-                        yPos = pageMargin; 
-                    } else if (yPos !== pageMargin + 10 && yPos !== pageMargin) { 
-                        yPos += 5; 
-                    }
-
-                    // Voeg de afbeelding toe aan de PDF
-                    pdf.addImage(imgData, 'JPEG', pageMargin, yPos, pdfWidth, imgHeight);
-                    yPos += imgHeight + 15; 
-                }
-                
-                // Save PDF
-                pdf.save('analytics-report-optimized.pdf');
-                
-            } catch (err) {
-                alert('Fout bij PDF export: ' + err.message);
-                console.error(err);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Export naar PDF';
-            }
+            pdf.setFont('helvetica', 'normal');
+            pdf.setTextColor(51, 51, 51);
+            pdf.text(companyName, pageMargin + labelWidth, yPos); // Gebruik de nieuwe labelWidth
+            yPos += 8;
         }
+
+        // 3. Datum
+        if (reportDate) {
+            pdf.setFont('helvetica', 'bold');
+            pdf.setTextColor(52, 73, 94);
+            pdf.text('Rapportagedatum:', pageMargin, yPos);
+            
+            pdf.setFont('helvetica', 'normal');
+            pdf.setTextColor(51, 51, 51);
+            pdf.text(reportDate, pageMargin + labelWidth, yPos); // Gebruik de nieuwe labelWidth
+            yPos += 12; // Grotere stap voor de toelichting
+        }
+        
+        // 4. Opmerkingen/Toelichting
+        if (reportNotes) {
+            pdf.setFontSize(14);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setTextColor(243, 156, 18);
+            pdf.text('Algemene Toelichting:', pageMargin, yPos);
+            yPos += 8;
+            
+            pdf.setFontSize(11);
+            pdf.setFont('helvetica', 'normal');
+            pdf.setTextColor(85, 85, 85);
+            
+            const maxTextWidth = pdf.internal.pageSize.getWidth() - (2 * pageMargin);
+            const splitNotes = pdf.splitTextToSize(reportNotes, maxTextWidth);
+            
+            const boxPadding = 3;
+            const lineHeight = 5;
+            const boxHeight = (splitNotes.length * lineHeight) + (2 * boxPadding);
+            
+            pdf.setFillColor(255, 251, 240); 
+            pdf.rect(pageMargin, yPos - boxPadding, maxTextWidth, boxHeight, 'F');
+            
+            pdf.setFillColor(243, 156, 18); 
+            pdf.rect(pageMargin, yPos - boxPadding, 3, boxHeight, 'F');
+            
+            pdf.setTextColor(51, 51, 51);
+            pdf.text(splitNotes, pageMargin + 5, yPos + 1.5); 
+            yPos += boxHeight + 8;
+        }
+        
+        yPos += 10;
+
+        // Horizontale lijn om de metadata af te sluiten
+        pdf.setDrawColor(204, 204, 204); 
+        pdf.setLineWidth(0.5);
+        pdf.line(pageMargin, yPos, pdf.internal.pageSize.getWidth() - pageMargin, yPos);
+        yPos += 10;
+        
+        // --- 2. RAPPORTAGE INHOUD (Grafieken en Tabellen) ---
+        // (Rest van de code voor grafieken en tabellen blijft ongewijzigd)
+        // ...
+        
+        const blocks = document.querySelectorAll('.variable-block');
+                
+        for (const block of blocks) {
+            const varId = block.dataset.variable;
+            
+            const clone = block.cloneNode(true);
+            
+            const table = clone.querySelector('table');
+            if (table) {
+                const headerRow = table.querySelector('thead tr');
+                if (headerRow) {
+                    headerRow.deleteCell(0);
+                }
+                
+                const rows = Array.from(table.querySelectorAll('tbody tr'));
+                rows.forEach((row) => {
+                    const cellToDelete = row.cells[0]; 
+                    if (cellToDelete) {
+                        cellToDelete.remove();
+                    }
+                });
+
+                // Directe Stijl Injectie voor optimale html2canvas rendering van de tabel
+                const tableClone = clone.querySelector('table.horizontal-layout');
+                if (tableClone) {
+                    const headerCell = tableClone.querySelector('thead tr th:nth-child(1)');
+                    if (headerCell) {
+                        headerCell.style.width = '180px';
+                        headerCell.style.minWidth = '180px';
+                        headerCell.style.maxWidth = '180px';
+                        headerCell.style.textAlign = 'left';
+                    }
+
+                    const dataHeaders = tableClone.querySelectorAll('thead tr th:not(:first-child)');
+                    dataHeaders.forEach(header => {
+                        header.style.width = '70px';
+                        header.style.minWidth = '70px';
+                        header.style.textAlign = 'right';
+                    });
+
+                    tableClone.querySelectorAll('tbody tr').forEach(row => {
+                        const nameCell = row.querySelector('td:nth-child(1)');
+                        if (nameCell) {
+                            nameCell.style.paddingLeft = row.classList.contains('subvar-row') ? '20px' : '10px';
+                            nameCell.style.textAlign = 'left';
+                            nameCell.style.width = '180px';
+                            nameCell.style.minWidth = '180px';
+                            nameCell.style.maxWidth = '180px';
+                            nameCell.style.whiteSpace = 'normal';
+                        }
+
+                        for (let i = 1; i < row.cells.length; i++) {
+                            row.cells[i].style.width = '70px';
+                            row.cells[i].style.minWidth = '70px';
+                            row.cells[i].style.textAlign = 'right';
+                        }
+                    });
+                }
+            }
+            
+            // Clone the chart image data
+            const originalCanvas = block.querySelector('canvas');
+            const clonedCanvas = clone.querySelector('canvas');
+            
+            if (originalCanvas && clonedCanvas) {
+                const ctx = clonedCanvas.getContext('2d');
+                clonedCanvas.width = originalCanvas.width;
+                clonedCanvas.height = originalCanvas.height;
+                ctx.drawImage(originalCanvas, 0, 0);
+            }
+            
+            // Set temporary styles for optimal html2canvas rendering
+            clone.style.position = 'absolute';
+            clone.style.left = '-9999px';
+            clone.style.top = '0';
+            clone.style.width = '1100px'; 
+            clone.style.padding = '15px';
+            clone.style.background = '#ffffff'; 
+            document.body.appendChild(clone);
+            
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+            // Capture with html2canvas 
+            const canvas = await html2canvas(clone, {
+                scale: 1.2, 
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff',
+                allowTaint: true,
+                windowWidth: 1100,
+                windowHeight: clone.scrollHeight
+            });
+            
+            // Remove clone from DOM
+            document.body.removeChild(clone);
+            
+            // Calculate optimal size for A4 landscape
+            const pdfWidth = pdf.internal.pageSize.getWidth() - (2 * pageMargin); 
+            const imgData = canvas.toDataURL('image/jpeg', 0.8);
+            const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+            
+            if (yPos + imgHeight > pageHeight - pageMargin) {
+                pdf.addPage();
+                yPos = pageMargin; 
+            } else if (yPos !== pageMargin + 10 && yPos !== pageMargin) { 
+                yPos += 5; 
+            }
+
+            // Voeg de afbeelding toe aan de PDF
+            pdf.addImage(imgData, 'JPEG', pageMargin, yPos, pdfWidth, imgHeight);
+            yPos += imgHeight + 15; 
+        }
+        
+        // Save PDF
+        pdf.save('analytics-report-optimized.pdf');
+        
+    } catch (err) {
+        alert('Fout bij PDF export: ' + err.message);
+        console.error(err);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Export naar PDF';
+    }
+}
     </script>
 
 </body>
