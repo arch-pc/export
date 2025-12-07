@@ -804,61 +804,102 @@ async function exportToPDF() {
         
         // Start PDF in 'landscape' (liggend) A4
         const pdf = new jsPDF('landscape', 'mm', 'a4');
-        let yPos = 10;
+        let yPos = 15; // Start iets lager voor een betere uitlijning
         const pageHeight = pdf.internal.pageSize.getHeight();
         const pageMargin = 10;
         
-        // NIEUWE LOGICA: Toevoegen van de algemene metadata
+        // --- 1. RAPPORTAGE METADATA PAGINA ---
+        
         const companyName = document.getElementById('companyName').value.trim();
         const reportDate = document.getElementById('reportDate').value.trim();
         const reportNotes = document.getElementById('reportNotes').value.trim();
         
-        // Set font size for metadata
-        pdf.setFontSize(14);
+        // Titel van het Rapport
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(44, 62, 80); // #2c3e50 (Donkerblauw/grijs)
+        pdf.setFontSize(22);
+        pdf.text('📊 Analytics Report Dashboard', pageMargin, yPos);
+        yPos += 15; // Ruimte na de titel
         
-        // 1. Titel
-        pdf.setFont(undefined, 'bold');
-        pdf.text('Analytics Report Dashboard', pageMargin, yPos);
+        // Horizontale lijn om de metadata te scheiden van de inhoud
+        pdf.setDrawColor(52, 152, 219); // #3498db (Blauw)
+        pdf.setLineWidth(1);
+        pdf.line(pageMargin, yPos, pdf.internal.pageSize.getWidth() - pageMargin, yPos);
         yPos += 8;
+        
+        // Algemene Stijl voor Metadata Labels
+        const labelWidth = 40;
+        pdf.setFontSize(13);
         
         // 2. Bedrijfsnaam
         if (companyName) {
-            pdf.setFont(undefined, 'bold');
+            pdf.setFont('helvetica', 'bold');
+            pdf.setTextColor(52, 73, 94); // #34495e (Donkerder dan de tekst)
             pdf.text('Bedrijfsnaam:', pageMargin, yPos);
-            pdf.setFont(undefined, 'normal');
-            pdf.text(companyName, pageMargin + 40, yPos);
-            yPos += 6;
+            
+            pdf.setFont('helvetica', 'normal');
+            pdf.setTextColor(51, 51, 51); // #333
+            pdf.text(companyName, pageMargin + labelWidth, yPos);
+            yPos += 8;
         }
 
         // 3. Datum
         if (reportDate) {
-            pdf.setFont(undefined, 'bold');
-            pdf.text('Datum:', pageMargin, yPos);
-            pdf.setFont(undefined, 'normal');
-            pdf.text(reportDate, pageMargin + 40, yPos);
-            yPos += 6;
+            pdf.setFont('helvetica', 'bold');
+            pdf.setTextColor(52, 73, 94);
+            pdf.text('Rapportagedatum:', pageMargin, yPos);
+            
+            pdf.setFont('helvetica', 'normal');
+            pdf.setTextColor(51, 51, 51);
+            pdf.text(reportDate, pageMargin + labelWidth, yPos);
+            yPos += 12; // Extra ruimte voor de notities
         }
         
         // 4. Opmerkingen/Toelichting
         if (reportNotes) {
-            yPos += 4;
-            pdf.setFontSize(12);
-            pdf.setFont(undefined, 'bold');
-            pdf.text('Algemene Toelichting:', pageMargin, yPos);
-            yPos += 6;
+            pdf.setFontSize(14);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setTextColor(243, 156, 18); // #f39c12 (Oranje/Geel voor de titel Opmerkingen)
+            pdf.text('📝 Algemene Toelichting:', pageMargin, yPos);
+            yPos += 8;
             
-            pdf.setFont(undefined, 'normal');
-            const splitNotes = pdf.splitTextToSize(reportNotes, pdf.internal.pageSize.getWidth() - (2 * pageMargin));
-            pdf.text(splitNotes, pageMargin, yPos);
-            yPos += (splitNotes.length * 5) + 8; // 5mm per regel + extra spatie
+            pdf.setFontSize(11);
+            pdf.setFont('helvetica', 'normal');
+            pdf.setTextColor(85, 85, 85); // #555
+            
+            // Tekst opsplitsen in regels die passen
+            const maxTextWidth = pdf.internal.pageSize.getWidth() - (2 * pageMargin);
+            const splitNotes = pdf.splitTextToSize(reportNotes, maxTextWidth);
+            
+            // Een gele/oranje box tekenen voor de notities (zoals in de HTML)
+            const boxPadding = 3;
+            const lineHeight = 5;
+            const boxHeight = (splitNotes.length * lineHeight) + (2 * boxPadding);
+            
+            pdf.setFillColor(255, 251, 240); // #fffbf0
+            pdf.rect(pageMargin, yPos - boxPadding, maxTextWidth, boxHeight, 'F');
+            
+            // Oranje rand (border-left)
+            pdf.setFillColor(243, 156, 18); // #f39c12
+            pdf.rect(pageMargin, yPos - boxPadding, 3, boxHeight, 'F');
+            
+            // Notitie tekst
+            pdf.setTextColor(51, 51, 51);
+            pdf.text(splitNotes, pageMargin + 5, yPos + 1.5);
+            yPos += boxHeight + 8; // Update yPos na de notitiebox
         }
         
-        yPos += 10; // Extra ruimte voor de rapportage begint
-        // EINDE NIEUWE LOGICA: Toevoegen van de algemene metadata
+        yPos += 10; // Extra ruimte voor de rapportage (grafieken) begint
 
+        // Horizontale lijn om de metadata af te sluiten
+        pdf.setDrawColor(204, 204, 204); // Lichter grijs
+        pdf.setLineWidth(0.5);
+        pdf.line(pageMargin, yPos, pdf.internal.pageSize.getWidth() - pageMargin, yPos);
+        yPos += 10;
         
+        // --- 2. RAPPORTAGE INHOUD (Grafieken en Tabellen) ---
+
         const blocks = document.querySelectorAll('.variable-block');
-        let firstPage = true; // Is nu voor de rapportage inhoud na de metadata
         
         for (const block of blocks) {
             const varId = block.dataset.variable;
@@ -866,9 +907,11 @@ async function exportToPDF() {
             // Clone and prepare element for capture
             const clone = block.cloneNode(true);
             
-            // Remove checkbox column from table (but keep ALL rows)
+            // Verwijder checkbox kolom uit tabel
             const table = clone.querySelector('table');
             if (table) {
+                // ... (De tabelverwijderings- en stijl-logica blijven hetzelfde) ...
+                
                 // Remove header checkbox column
                 const headerRow = table.querySelector('thead tr');
                 if (headerRow) {
@@ -878,14 +921,13 @@ async function exportToPDF() {
                 // Remove checkbox cells from all data rows (but KEEP all rows)
                 const rows = Array.from(table.querySelectorAll('tbody tr'));
                 rows.forEach((row) => {
-                    // Verwijder alleen de checkbox cel, niet de hele rij
                     const cellToDelete = row.cells[0]; 
                     if (cellToDelete) {
                         cellToDelete.remove();
                     }
                 });
 
-                // **CRUCIALE FIX VOOR DE PDF EXPORT: DIRECTE STIJL INJECTIE**
+                // Cruciale Fix voor PDF Export: Directe Stijl Injectie
                 const tableClone = clone.querySelector('table.horizontal-layout');
                 if (tableClone) {
                     // Header cells aanpassen
@@ -932,7 +974,6 @@ async function exportToPDF() {
             const clonedCanvas = clone.querySelector('canvas');
             
             if (originalCanvas && clonedCanvas) {
-                // De grafiek is al geüpdatet met de juiste selectie door de updateChart-functie
                 const ctx = clonedCanvas.getContext('2d');
                 clonedCanvas.width = originalCanvas.width;
                 clonedCanvas.height = originalCanvas.height;
@@ -943,16 +984,16 @@ async function exportToPDF() {
             clone.style.position = 'absolute';
             clone.style.left = '-9999px';
             clone.style.top = '0';
-            clone.style.width = '1100px'; // Set width for a good landscape fit
+            clone.style.width = '1100px'; 
             clone.style.padding = '15px';
-            clone.style.background = '#ffffff'; // Force white background
+            clone.style.background = '#ffffff'; 
             document.body.appendChild(clone);
             
             await new Promise(resolve => setTimeout(resolve, 200));
             
-            // Capture with html2canvas - verlaagde schaal voor kleinere bestandsgrootte
+            // Capture with html2canvas 
             const canvas = await html2canvas(clone, {
-                scale: 1.2, // Verlaagd van 1.5 of 2.0 voor kleinere bestanden
+                scale: 1.2, 
                 useCORS: true,
                 logging: false,
                 backgroundColor: '#ffffff',
@@ -965,22 +1006,21 @@ async function exportToPDF() {
             document.body.removeChild(clone);
             
             // Calculate optimal size for A4 landscape
-            const pdfWidth = pdf.internal.pageSize.getWidth() - 20; // 10mm margin each side
+            const pdfWidth = pdf.internal.pageSize.getWidth() - (2 * pageMargin); 
             const imgData = canvas.toDataURL('image/jpeg', 0.8);
             const imgHeight = (canvas.height * pdfWidth) / canvas.width;
             
-            // Check if the content fits on the current page
+            // Controleer of de inhoud op de huidige pagina past
             if (yPos + imgHeight > pageHeight - pageMargin) {
                 pdf.addPage();
                 yPos = pageMargin; // Start bovenaan de nieuwe pagina
-            } else if (!firstPage && yPos !== pageMargin) {
-                yPos += 5; // Extra ruimte tussen blokken
+            } else if (yPos !== pageMargin + 10 && yPos !== pageMargin) { // Voeg alleen extra ruimte toe als we niet bovenaan staan
+                yPos += 5; 
             }
 
             // Voeg de afbeelding toe aan de PDF
             pdf.addImage(imgData, 'JPEG', pageMargin, yPos, pdfWidth, imgHeight);
             yPos += imgHeight + 15; // Update yPos voor het volgende blok
-            firstPage = false;
         }
         
         // Save PDF
