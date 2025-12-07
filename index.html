@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytics Rapportage Dashboard</title>
+    <title>Analytics Rapportage Dashboard</title> 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
@@ -75,7 +75,7 @@
             cursor: pointer;
             font-size: 1.1em;
             transition: background-color 0.3s;
-            align-self: flex-end; /* Zorgt ervoor dat de knop onderaan uitlijnt */
+            align-self: flex-end; 
         }
 
         #exportBtn:hover:not(:disabled) {
@@ -155,16 +155,16 @@
         .data-container {
             display: flex;
             gap: 20px;
-            flex-wrap: wrap; /* Voor kleinere schermen */
+            flex-wrap: wrap; 
         }
 
         .data-section {
-            flex: 1 1 500px; /* Neemt minstens 500px breedte in */
+            flex: 1 1 500px; 
             overflow-x: auto;
         }
 
         .chart-container {
-            flex: 1 1 400px; /* Neemt minstens 400px breedte in */
+            flex: 1 1 400px;
             background-color: #f9f9f9;
             padding: 10px;
             border-radius: 4px;
@@ -206,7 +206,7 @@
             min-width: 180px;
             width: 180px;
             max-width: 180px;
-            word-wrap: break-word; /* Zorgt voor omslag van lange namen */
+            word-wrap: break-word; 
         }
 
         /* Checkbox kolom - Klein en gecentreerd */
@@ -223,20 +223,20 @@
         }
 
         .subvar-row td:nth-child(2) {
-            padding-left: 25px !important; /* Inspringing voor subvariabelen */
+            padding-left: 25px !important; 
             font-weight: normal;
         }
         
         /* Delta Formatting */
         .delta-positive {
-            color: #27ae60; /* Groen */
+            color: #27ae60;
             font-weight: bold;
             font-size: 0.9em;
             margin-left: 5px;
         }
 
         .delta-negative {
-            color: #e74c3c; /* Rood */
+            color: #e74c3c;
             font-weight: bold;
             font-size: 0.9em;
             margin-left: 5px;
@@ -250,9 +250,9 @@
         .notes-box {
             margin-top: 15px;
             padding: 10px;
-            background-color: #fffbf0; /* Zeer licht geel/oranje */
+            background-color: #fffbf0; 
             border-radius: 4px;
-            border-left: 5px solid #f39c12; /* Oranje balk links */
+            border-left: 5px solid #f39c12; 
         }
 
         .notes-title {
@@ -283,7 +283,7 @@
 <body>
 
     <div class="container">
-        <h1>Dashboard Rapportage Tool 📈</h1>
+        <h1>Dashboard Rapportage Tool</h1> 
 
         <div class="controls">
             <div class="input-group">
@@ -363,12 +363,9 @@
             for (let i = currentIndex - 1; i >= 0; i--) {
                 const prevValue = data[weeks[i]];
                 if (prevValue !== null) {
-                    // Check of het een getal is voordat we aftrekken
                     if (typeof currentValue === 'number' && typeof prevValue === 'number') {
-                        // Delta berekening voor getallen
                         return currentValue - prevValue;
                     }
-                    // Als het geen getallen zijn, return null (geen delta mogelijk)
                     return null;
                 }
             }
@@ -381,19 +378,18 @@
             if (delta === null || typeof delta !== 'number') return '';
             const sign = delta >= 0 ? '+' : '';
             const className = delta >= 0 ? 'delta-positive' : 'delta-negative';
-            return `<span class="${className}">${sign}${Math.round(delta * 100) / 100}${unit}</span>`; // Afronden op 2 decimalen
+            return `<span class="${className}">${sign}${Math.round(delta * 100) / 100}${unit}</span>`;
         }
         
         // Natural sort for week labels - **WIJZIGING** (Beter sorteren + week 5 uitsluiten)
         function sortWeeks(weeks) {
             const sorted = weeks.sort((a, b) => {
-                // Extraheren van het weeknummer (bijv. 1 uit 'week 1')
                 const numA = parseInt(a.match(/\d+/)?.[0] || '0');
                 const numB = parseInt(b.match(/\d+/)?.[0] || '0');
                 return numA - numB;
             });
             
-            // NIEUWE CODE: Filter week 5 uit de gesorteerde lijst (of andere uitsluitingen indien nodig)
+            // Filter week 5 uit de gesorteerde lijst
             return sorted.filter(week => !week.toLowerCase().includes('week 5'));
         }
         
@@ -405,8 +401,8 @@
             
             // Header row with checkbox column + variable name column + week labels
             html += '<thead><tr>';
-            html += '<th>PDF</th>'; // Checkbox column header
-            html += '<th>Variabele Naam</th>'; // Variabele Naam column header
+            html += '<th>PDF</th>'; 
+            html += '<th>Variabele Naam</th>'; 
             weeks.forEach(week => {
                 html += `<th>${week}</th>`;
             });
@@ -461,7 +457,7 @@
                 type: 'line',
                 data: {
                     labels: weeks,
-                    datasets: [] // Wordt gevuld door updateChart
+                    datasets: []
                 },
                 options: {
                     responsive: true,
@@ -493,17 +489,15 @@
             
             chartInstances.push(chart);
 
-            // Laad de initiële data na het aanmaken van de Chart.js instantie
             const varId = canvasId.replace('chart-', '');
             updateChart(canvasId, jsonData, varId);
         }
 
-        // NIEUWE FUNCTIE: Update de grafiek op basis van checkbox selectie
+        // Update de grafiek op basis van checkbox selectie
         function updateChart(chartId, data, varId) {
             const chart = chartInstances.find(instance => instance.canvas.id === chartId);
             if (!chart) return;
 
-            // Zoek de variabele in de jsonData
             let variable = null;
             const [categoryKey, varIdx] = varId.split('-');
             if (data[categoryKey] && data[categoryKey].variables) {
@@ -514,7 +508,6 @@
             const weeks = sortWeeks(Object.keys(variable.data));
             const newDatasets = [];
 
-            // Hulpkleuren voor subvariabelen
             const subColors = ['#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#34495e'];
 
             // 1. Controleer de Main Variable checkbox
@@ -538,7 +531,6 @@
                     const subId = `${varId}-sub${idx}`;
                     const subCheckbox = document.querySelector(`input[data-var="${varId}"][data-subvar="${subId}"][data-type="sub"]`);
 
-                    // Toon ALLEEN als de checkbox is aangevinkt
                     if (subCheckbox && subCheckbox.checked) {
                         newDatasets.push({
                             label: trimName(subVar.name),
@@ -610,7 +602,8 @@
                         // Notes
                         if (variable.notes && variable.notes.trim()) {
                             html += `<div class="notes-box" data-notes="${varId}">`;
-                            html += `<div class="notes-title">📝 Opmerkingen</div>`;
+                            // Emoji verwijderd uit opmerkingen titel
+                            html += `<div class="notes-title">Opmerkingen</div>`; 
                             html += `<div class="notes-content">${variable.notes}</div>`;
                             html += `</div>`;
                         }
@@ -635,7 +628,6 @@
                             createChart(chartId, variable, categoryKey);
                         });
                         
-                        // Small delay before PDF is ready to be generated
                         setTimeout(() => {
                             document.getElementById('exportBtn').disabled = false;
                         }, 500);
@@ -647,7 +639,6 @@
                     checkbox.addEventListener('change', (e) => {
                         const varId = e.target.dataset.var;
                         const chartId = `chart-${varId}`;
-                        // Update de grafiek met de nieuwe selectie
                         updateChart(chartId, jsonData, varId);  
                     });
                 });
@@ -655,19 +646,17 @@
             }, 100);
         }
         
-        // Export to PDF with charts and selective rows - OPTIMIZED FOR FILE SIZE
+        // Export to PDF with charts and selective rows - NU ZONDER EMOJI'S IN PDF
         async function exportToPDF() {
             const btn = document.getElementById('exportBtn');
             btn.disabled = true;
             btn.textContent = 'PDF genereren...';
             
             try {
-                // Maakt gebruik van de window.jspdf object dat door de script-tag is geladen
                 const { jsPDF } = window.jspdf; 
                 
-                // Start PDF in 'landscape' (liggend) A4
                 const pdf = new jsPDF('landscape', 'mm', 'a4');
-                let yPos = 15; // Start iets lager voor een betere uitlijning
+                let yPos = 15;
                 const pageHeight = pdf.internal.pageSize.getHeight();
                 const pageMargin = 10;
                 
@@ -677,15 +666,15 @@
                 const reportDate = document.getElementById('reportDate').value.trim();
                 const reportNotes = document.getElementById('reportNotes').value.trim();
                 
-                // Titel van het Rapport
+                // Titel van het Rapport (nu pure tekst)
                 pdf.setFont('helvetica', 'bold');
-                pdf.setTextColor(44, 62, 80); // #2c3e50 (Donkerblauw/grijs)
+                pdf.setTextColor(44, 62, 80); 
                 pdf.setFontSize(22);
-                pdf.text('📊 Analytics Report Dashboard', pageMargin, yPos);
-                yPos += 15; // Ruimte na de titel
+                pdf.text('Rapportage Dashboard', pageMargin, yPos); 
+                yPos += 15; 
                 
                 // Horizontale lijn om de metadata te scheiden van de inhoud
-                pdf.setDrawColor(52, 152, 219); // #3498db (Blauw)
+                pdf.setDrawColor(52, 152, 219); 
                 pdf.setLineWidth(1);
                 pdf.line(pageMargin, yPos, pdf.internal.pageSize.getWidth() - pageMargin, yPos);
                 yPos += 8;
@@ -697,11 +686,11 @@
                 // 2. Bedrijfsnaam
                 if (companyName) {
                     pdf.setFont('helvetica', 'bold');
-                    pdf.setTextColor(52, 73, 94); // #34495e (Donkerder dan de tekst)
+                    pdf.setTextColor(52, 73, 94); 
                     pdf.text('Bedrijfsnaam:', pageMargin, yPos);
                     
                     pdf.setFont('helvetica', 'normal');
-                    pdf.setTextColor(51, 51, 51); // #333
+                    pdf.setTextColor(51, 51, 51); 
                     pdf.text(companyName, pageMargin + labelWidth, yPos);
                     yPos += 8;
                 }
@@ -715,48 +704,44 @@
                     pdf.setFont('helvetica', 'normal');
                     pdf.setTextColor(51, 51, 51);
                     pdf.text(reportDate, pageMargin + labelWidth, yPos);
-                    yPos += 12; // Extra ruimte voor de notities
+                    yPos += 12; 
                 }
                 
                 // 4. Opmerkingen/Toelichting
                 if (reportNotes) {
                     pdf.setFontSize(14);
                     pdf.setFont('helvetica', 'bold');
-                    pdf.setTextColor(243, 156, 18); // #f39c12 (Oranje/Geel voor de titel Opmerkingen)
-                    pdf.text('📝 Algemene Toelichting:', pageMargin, yPos);
+                    pdf.setTextColor(243, 156, 18);
+                    // De titel is nu pure tekst
+                    pdf.text('Algemene Toelichting:', pageMargin, yPos); 
                     yPos += 8;
                     
                     pdf.setFontSize(11);
                     pdf.setFont('helvetica', 'normal');
-                    pdf.setTextColor(85, 85, 85); // #555
+                    pdf.setTextColor(85, 85, 85);
                     
-                    // Tekst opsplitsen in regels die passen
                     const maxTextWidth = pdf.internal.pageSize.getWidth() - (2 * pageMargin);
                     const splitNotes = pdf.splitTextToSize(reportNotes, maxTextWidth);
                     
-                    // Een gele/oranje box tekenen voor de notities (zoals in de HTML)
                     const boxPadding = 3;
                     const lineHeight = 5;
                     const boxHeight = (splitNotes.length * lineHeight) + (2 * boxPadding);
                     
-                    pdf.setFillColor(255, 251, 240); // #fffbf0
+                    pdf.setFillColor(255, 251, 240); 
                     pdf.rect(pageMargin, yPos - boxPadding, maxTextWidth, boxHeight, 'F');
                     
-                    // Oranje rand (border-left)
-                    pdf.setFillColor(243, 156, 18); // #f39c12
+                    pdf.setFillColor(243, 156, 18); 
                     pdf.rect(pageMargin, yPos - boxPadding, 3, boxHeight, 'F');
                     
-                    // Notitie tekst
                     pdf.setTextColor(51, 51, 51);
-                    // yPos + 1.5 zorgt voor een kleine verticale correctie
                     pdf.text(splitNotes, pageMargin + 5, yPos + 1.5); 
-                    yPos += boxHeight + 8; // Update yPos na de notitiebox
+                    yPos += boxHeight + 8;
                 }
                 
-                yPos += 10; // Extra ruimte voor de rapportage (grafieken) begint
+                yPos += 10;
 
                 // Horizontale lijn om de metadata af te sluiten
-                pdf.setDrawColor(204, 204, 204); // Lichter grijs
+                pdf.setDrawColor(204, 204, 204); 
                 pdf.setLineWidth(0.5);
                 pdf.line(pageMargin, yPos, pdf.internal.pageSize.getWidth() - pageMargin, yPos);
                 yPos += 10;
@@ -768,19 +753,15 @@
                 for (const block of blocks) {
                     const varId = block.dataset.variable;
                     
-                    // Clone and prepare element for capture
                     const clone = block.cloneNode(true);
                     
-                    // Verwijder checkbox kolom uit tabel EN pas de stijlen aan
                     const table = clone.querySelector('table');
                     if (table) {
-                        // Remove header checkbox column
                         const headerRow = table.querySelector('thead tr');
                         if (headerRow) {
                             headerRow.deleteCell(0);
                         }
                         
-                        // Remove checkbox cells from all data rows (but KEEP all rows)
                         const rows = Array.from(table.querySelectorAll('tbody tr'));
                         rows.forEach((row) => {
                             const cellToDelete = row.cells[0]; 
@@ -792,7 +773,6 @@
                         // Directe Stijl Injectie voor optimale html2canvas rendering van de tabel
                         const tableClone = clone.querySelector('table.horizontal-layout');
                         if (tableClone) {
-                            // Header cells aanpassen
                             const headerCell = tableClone.querySelector('thead tr th:nth-child(1)');
                             if (headerCell) {
                                 headerCell.style.width = '180px';
@@ -801,7 +781,6 @@
                                 headerCell.style.textAlign = 'left';
                             }
 
-                            // Data kolommen headers kleiner maken
                             const dataHeaders = tableClone.querySelectorAll('thead tr th:not(:first-child)');
                             dataHeaders.forEach(header => {
                                 header.style.width = '70px';
@@ -809,7 +788,6 @@
                                 header.style.textAlign = 'right';
                             });
 
-                            // Data cells aanpassen
                             tableClone.querySelectorAll('tbody tr').forEach(row => {
                                 const nameCell = row.querySelector('td:nth-child(1)');
                                 if (nameCell) {
@@ -821,7 +799,6 @@
                                     nameCell.style.whiteSpace = 'normal';
                                 }
 
-                                // Alle andere cellen (data) - kleiner en rechts uitgelijnd
                                 for (let i = 1; i < row.cells.length; i++) {
                                     row.cells[i].style.width = '70px';
                                     row.cells[i].style.minWidth = '70px';
@@ -872,17 +849,16 @@
                     const imgData = canvas.toDataURL('image/jpeg', 0.8);
                     const imgHeight = (canvas.height * pdfWidth) / canvas.width;
                     
-                    // Controleer of de inhoud op de huidige pagina past
                     if (yPos + imgHeight > pageHeight - pageMargin) {
                         pdf.addPage();
-                        yPos = pageMargin; // Start bovenaan de nieuwe pagina
-                    } else if (yPos !== pageMargin + 10 && yPos !== pageMargin) { // Voeg alleen extra ruimte toe als we niet bovenaan staan
+                        yPos = pageMargin; 
+                    } else if (yPos !== pageMargin + 10 && yPos !== pageMargin) { 
                         yPos += 5; 
                     }
 
                     // Voeg de afbeelding toe aan de PDF
                     pdf.addImage(imgData, 'JPEG', pageMargin, yPos, pdfWidth, imgHeight);
-                    yPos += imgHeight + 15; // Update yPos voor het volgende blok
+                    yPos += imgHeight + 15; 
                 }
                 
                 // Save PDF
