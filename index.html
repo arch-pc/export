@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytics Report Dashboard</title>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Report Dashboard</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
 <style>
     * {
         margin: 0;
@@ -43,6 +43,39 @@
         margin-bottom: 15px;
         font-size: 22px;
     }
+
+    /* NIEUWE STIJL: Voor de invoervelden in de header */
+    .report-meta-input {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .report-meta-input label {
+        font-weight: 600;
+        color: #555;
+        font-size: 13px;
+    }
+
+    .report-meta-input input[type="text"],
+    .report-meta-input textarea {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 13px;
+        width: 100%;
+        max-width: 400px; /* Beperk de breedte voor nette invoer */
+        box-sizing: border-box;
+    }
+
+    .report-meta-input textarea {
+        resize: vertical;
+        min-height: 80px;
+        max-width: 600px;
+    }
+    /* EINDE NIEUWE STIJL */
+
 
     .file-input-group {
         display: flex;
@@ -378,36 +411,47 @@
             page-break-inside: avoid;
         }
 
-        button, input[type="file"] {
+        button, input[type="file"], .report-meta-input {
             display: none;
         }
     }
 </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>📊 Analytics Report Dashboard</h1>
-            <div class="file-input-group">
-                <input type="file" id="fileInput" accept="application/json">
-                <button id="exportBtn" disabled>Export naar PDF</button>
-            </div>
-            <div id="errorMsg"></div>
-        </header>
-        
-        <div id="reportContent"></div>
-    </div>
+    <div class="container">
+        <header>
+            <h1>📊 Analytics Report Dashboard</h1>
+            
+            <div class="report-meta-input">
+                <label for="companyName">Bedrijfsnaam:</label>
+                <input type="text" id="companyName" placeholder="Voer Bedrijfsnaam in">
+                
+                <label for="reportDate">Datum:</label>
+                <input type="text" id="reportDate" placeholder="Bijv. Q4 2025 of 1-12-2025" value="Rapportage van ${new Date().toLocaleDateString('nl-NL')}">
+                
+                <label for="reportNotes">Opmerkingen/Toelichting (optioneel):</label>
+                <textarea id="reportNotes" placeholder="Voer hier een algemene toelichting of inleiding in..."></textarea>
+            </div>
+            <div class="file-input-group">
+                <input type="file" id="fileInput" accept="application/json">
+                <button id="exportBtn" disabled>Export naar PDF</button>
+            </div>
+            <div id="errorMsg"></div>
+        </header>
+        
+        <div id="reportContent"></div>
+    </div>
 
 <script>
     // Global data store
     let jsonData = null;
     let chartInstances = [];
-  
+    
     // File input handler
     document.getElementById('fileInput').addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
-      
+        
         const reader = new FileReader();
         reader.onload = (event) => {
             try {
@@ -421,31 +465,31 @@
         };
         reader.readAsText(file);
     });
-  
+    
     // Export button handler
     document.getElementById('exportBtn').addEventListener('click', () => {
         exportToPDF();
     });
-  
+    
     // Show error message
     function showError(msg) {
         document.getElementById('errorMsg').innerHTML = `<div class="error">${msg}</div>`;
         document.getElementById('reportContent').innerHTML = '';
         document.getElementById('exportBtn').disabled = true;
     }
-  
+    
     // Trim whitespace from variable names
     function trimName(name) {
         return name.replace(/\s+/g, ' ').trim();
     }
-  
+    
     // Calculate delta between current and previous non-null value
     function calculateDelta(data, weeks, currentIndex) {
         if (currentIndex === 0) return null;
-      
+        
         const currentValue = data[weeks[currentIndex]];
         if (currentValue === null) return null;
-      
+        
         // Find previous non-null value
         for (let i = currentIndex - 1; i >= 0; i--) {
             const prevValue = data[weeks[i]];
@@ -453,10 +497,10 @@
                 return currentValue - prevValue;
             }
         }
-      
+        
         return null; // First non-null value
     }
-  
+    
     // Format delta for display
     function formatDelta(delta, unit) {
         if (delta === null) return '';
@@ -464,43 +508,26 @@
         const className = delta >= 0 ? 'delta-positive' : 'delta-negative';
         return `<span class="${className}">${sign}${delta}${unit}</span>`;
     }
-  
-
-// Aanname: jsonData bevat de volledige JSON, inclusief dateMappings
-let jsonData = null; // Dit moet worden gevuld bij het laden van de JSON
-
-function sortWeeks(weeks) {
-    // 1. Sorteer op weeknummer (om te garanderen dat de volgorde klopt)
-    const sorted = weeks.sort((a, b) => {
-        const numA = parseInt(a.match(/\d+/)?.[0] || '0');
-        const numB = parseInt(b.match(/\d+/)?.[0] || '0');
-        return numA - numB;
-    });
-
-    // 2. Filter week 5 uit (zoals u al deed, als de waarde 'null' is)
-    const filtered = sorted.filter(week => !week.toLowerCase().includes('week 5'));
     
-    // 3. Koppel de datumreeks eraan vast
-    if (jsonData && jsonData.dateMappings) {
-        return filtered.map(weekLabel => {
-            const dateRange = jsonData.dateMappings[weekLabel];
-            if (dateRange) {
-                // Dit is de nieuwe, gecombineerde label die in de grafiek/tabel komt
-                return `${weekLabel}: ${dateRange}`; 
-            }
-            return weekLabel; 
+    // Natural sort for week labels - **WIJZIGING** (Beter sorteren + week 5 uitsluiten)
+    function sortWeeks(weeks) {
+        const sorted = weeks.sort((a, b) => {
+            // Extraheren van het weeknummer (bijv. 1 uit 'week 1')
+            const numA = parseInt(a.match(/\d+/)?.[0] || '0');
+            const numB = parseInt(b.match(/\d+/)?.[0] || '0');
+            return numA - numB;
         });
+        
+        // **NIEUWE CODE**: Filter week 5 uit de gesorteerde lijst
+        return sorted.filter(week => !week.toLowerCase().includes('week 5'));
     }
-
-    return filtered;
-}
-  
+    
     // Render horizontal data table with main variable and subvariables combined
     function renderCombinedTable(variable, unit, varId) {
         const weeks = sortWeeks(Object.keys(variable.data));
-      
+        
         let html = '<div class="data-table-horizontal"><table class="horizontal-layout">';
-      
+        
         // Header row with checkbox column + variable name column + week labels
         html += '<thead><tr>';
         html += '<th>PDF</th>'; // Checkbox column header
@@ -509,7 +536,7 @@ function sortWeeks(weeks) {
             html += `<th>${week}</th>`;
         });
         html += '</tr></thead><tbody>';
-      
+        
         // Main variable row
         html += '<tr>';
         html += `<td><input type="checkbox" class="pdf-select-row" data-var="${varId}" data-type="main" checked></td>`;
@@ -524,7 +551,7 @@ function sortWeeks(weeks) {
             html += `<td>${cellContent}</td>`;
         });
         html += '</tr>';
-      
+        
         // Subvariables rows
         if (variable.subVariables && variable.subVariables.length > 0) {
             variable.subVariables.forEach((subVar, subIdx) => {
@@ -544,18 +571,18 @@ function sortWeeks(weeks) {
                 html += '</tr>';
             });
         }
-      
+        
         html += '</tbody></table></div>';
         return html;
     }
-  
+    
     // Create chart for variable
     function createChart(canvasId, variable, categoryName) {
         const ctx = document.getElementById(canvasId);
         if (!ctx) return;
-      
+        
         const weeks = sortWeeks(Object.keys(variable.data));
-      
+        
         const chart = new Chart(ctx, {
             type: 'line',
             data: {
@@ -601,7 +628,7 @@ function sortWeeks(weeks) {
                 }
             }
         });
-      
+        
         chartInstances.push(chart);
 
         // Laad de initiële data na het aanmaken van de Chart.js instantie
@@ -668,56 +695,56 @@ function sortWeeks(weeks) {
         chart.data.datasets = newDatasets;
         chart.update();
     }
-  
+    
     // Render complete report
     function renderReport(data) {
         // Destroy existing charts
         chartInstances.forEach(chart => chart.destroy());
         chartInstances = [];
-      
+        
         const content = document.getElementById('reportContent');
         let html = '';
-      
+        
         Object.keys(data).forEach(categoryKey => {
             const category = data[categoryKey];
             html += `<div class="category-card" data-category="${categoryKey}">`;
             html += `<h2 class="category-title">${categoryKey}</h2>`;
-          
+            
             if (category.variables) {
                 category.variables.forEach((variable, varIdx) => {
                     const varId = `${categoryKey}-${varIdx}`;
                     const cleanName = trimName(variable.name);
                     const unit = variable.unit || '';
-                  
+                    
                     html += `<div class="variable-block" data-variable="${varId}">`;
                     html += `<div class="variable-header">`;
                     html += `<div class="variable-name">${cleanName}</div>`;
                     html += `<div class="variable-meta">`;
-                  
+                    
                     if (variable.tags && variable.tags.length > 0) {
                         variable.tags.forEach(tag => {
                             html += `<span class="tag">${tag}</span>`;
                         });
                     }
-                  
+                    
                     if (unit) {
                         html += `<span class="unit">(${unit})</span>`;
                     }
-                  
+                    
                     html += `</div></div>`;
-                  
+                    
                     // Combined table with main variable and subvariables
                     html += `<div class="data-container">`;
                     html += `<div class="data-section">`;
                     html += renderCombinedTable(variable, unit, varId);
                     html += `</div>`;
-                  
+                    
                     // Chart
                     const chartId = `chart-${varId}`;
                     html += `<div class="chart-container"><canvas id="${chartId}"></canvas></div>`;
-                  
+                    
                     html += `</div>`; // Close data-container
-                  
+                    
                     // Notes
                     if (variable.notes && variable.notes.trim()) {
                         html += `<div class="notes-box" data-notes="${varId}">`;
@@ -725,16 +752,16 @@ function sortWeeks(weeks) {
                         html += `<div class="notes-content">${variable.notes}</div>`;
                         html += `</div>`;
                     }
-                  
+                    
                     html += `</div>`;
                 });
             }
-          
+            
             html += `</div>`;
         });
-      
+        
         content.innerHTML = html;
-      
+        
         // Create charts after DOM update
         setTimeout(() => {
             Object.keys(data).forEach(categoryKey => {
@@ -745,7 +772,7 @@ function sortWeeks(weeks) {
                         const chartId = `chart-${varId}`;
                         createChart(chartId, variable, categoryKey);
                     });
-                  
+                    
                     // Small delay before PDF is ready to be generated
                     setTimeout(() => {
                         document.getElementById('exportBtn').disabled = false;
@@ -759,34 +786,86 @@ function sortWeeks(weeks) {
                     const varId = e.target.dataset.var;
                     const chartId = `chart-${varId}`;
                     // Update de grafiek met de nieuwe selectie
-                    updateChart(chartId, jsonData, varId);   
+                    updateChart(chartId, jsonData, varId);  
                 });
             });
 
         }, 100);
     }
-  
+    
 // Export to PDF with charts and selective rows - OPTIMIZED FOR FILE SIZE
 async function exportToPDF() {
     const btn = document.getElementById('exportBtn');
     btn.disabled = true;
     btn.textContent = 'PDF genereren...';
-  
+    
     try {
         const { jsPDF } = window.jspdf;
-      
+        
         // Start PDF in 'landscape' (liggend) A4
         const pdf = new jsPDF('landscape', 'mm', 'a4');
-        let firstPage = true;
-      
+        let yPos = 10;
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const pageMargin = 10;
+        
+        // NIEUWE LOGICA: Toevoegen van de algemene metadata
+        const companyName = document.getElementById('companyName').value.trim();
+        const reportDate = document.getElementById('reportDate').value.trim();
+        const reportNotes = document.getElementById('reportNotes').value.trim();
+        
+        // Set font size for metadata
+        pdf.setFontSize(14);
+        
+        // 1. Titel
+        pdf.setFont(undefined, 'bold');
+        pdf.text('Analytics Report Dashboard', pageMargin, yPos);
+        yPos += 8;
+        
+        // 2. Bedrijfsnaam
+        if (companyName) {
+            pdf.setFont(undefined, 'bold');
+            pdf.text('Bedrijfsnaam:', pageMargin, yPos);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(companyName, pageMargin + 40, yPos);
+            yPos += 6;
+        }
+
+        // 3. Datum
+        if (reportDate) {
+            pdf.setFont(undefined, 'bold');
+            pdf.text('Datum:', pageMargin, yPos);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(reportDate, pageMargin + 40, yPos);
+            yPos += 6;
+        }
+        
+        // 4. Opmerkingen/Toelichting
+        if (reportNotes) {
+            yPos += 4;
+            pdf.setFontSize(12);
+            pdf.setFont(undefined, 'bold');
+            pdf.text('Algemene Toelichting:', pageMargin, yPos);
+            yPos += 6;
+            
+            pdf.setFont(undefined, 'normal');
+            const splitNotes = pdf.splitTextToSize(reportNotes, pdf.internal.pageSize.getWidth() - (2 * pageMargin));
+            pdf.text(splitNotes, pageMargin, yPos);
+            yPos += (splitNotes.length * 5) + 8; // 5mm per regel + extra spatie
+        }
+        
+        yPos += 10; // Extra ruimte voor de rapportage begint
+        // EINDE NIEUWE LOGICA: Toevoegen van de algemene metadata
+
+        
         const blocks = document.querySelectorAll('.variable-block');
-      
+        let firstPage = true; // Is nu voor de rapportage inhoud na de metadata
+        
         for (const block of blocks) {
             const varId = block.dataset.variable;
-          
+            
             // Clone and prepare element for capture
             const clone = block.cloneNode(true);
-          
+            
             // Remove checkbox column from table (but keep ALL rows)
             const table = clone.querySelector('table');
             if (table) {
@@ -795,7 +874,7 @@ async function exportToPDF() {
                 if (headerRow) {
                     headerRow.deleteCell(0);
                 }
-              
+                
                 // Remove checkbox cells from all data rows (but KEEP all rows)
                 const rows = Array.from(table.querySelectorAll('tbody tr'));
                 rows.forEach((row) => {
@@ -847,11 +926,11 @@ async function exportToPDF() {
                     });
                 }
             }
-          
+            
             // Clone the chart image data
             const originalCanvas = block.querySelector('canvas');
             const clonedCanvas = clone.querySelector('canvas');
-          
+            
             if (originalCanvas && clonedCanvas) {
                 // De grafiek is al geüpdatet met de juiste selectie door de updateChart-functie
                 const ctx = clonedCanvas.getContext('2d');
@@ -859,7 +938,7 @@ async function exportToPDF() {
                 clonedCanvas.height = originalCanvas.height;
                 ctx.drawImage(originalCanvas, 0, 0);
             }
-          
+            
             // Set temporary styles for optimal html2canvas rendering
             clone.style.position = 'absolute';
             clone.style.left = '-9999px';
@@ -868,9 +947,9 @@ async function exportToPDF() {
             clone.style.padding = '15px';
             clone.style.background = '#ffffff'; // Force white background
             document.body.appendChild(clone);
-          
+            
             await new Promise(resolve => setTimeout(resolve, 200));
-          
+            
             // Capture with html2canvas - verlaagde schaal voor kleinere bestandsgrootte
             const canvas = await html2canvas(clone, {
                 scale: 1.2, // Verlaagd van 1.5 of 2.0 voor kleinere bestanden
@@ -881,39 +960,32 @@ async function exportToPDF() {
                 windowWidth: 1100,
                 windowHeight: clone.scrollHeight
             });
-          
+            
             // Remove clone from DOM
             document.body.removeChild(clone);
-          
-            // Add page if not first
-            if (!firstPage) {
-                pdf.addPage();
-            }
-            firstPage = false;
-          
-            // Convert canvas to JPEG to reduce file size (quality 0.8)
-            const imgData = canvas.toDataURL('image/jpeg', 0.8);
-          
+            
             // Calculate optimal size for A4 landscape
             const pdfWidth = pdf.internal.pageSize.getWidth() - 20; // 10mm margin each side
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-            const pageHeight = pdf.internal.pageSize.getHeight() - 20;
-          
-            if (pdfHeight <= pageHeight) {
-                // Fits nicely, centered
-                pdf.addImage(imgData, 'JPEG', 10, 10, pdfWidth, pdfHeight);
-            } else {
-                // Too tall, scale down to fit height
-                const scale = pageHeight / pdfHeight;
-                const scaledWidth = pdfWidth * scale;
-                const scaledHeight = pageHeight;
-                pdf.addImage(imgData, 'JPEG', 10, 10, scaledWidth, scaledHeight);
+            const imgData = canvas.toDataURL('image/jpeg', 0.8);
+            const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+            
+            // Check if the content fits on the current page
+            if (yPos + imgHeight > pageHeight - pageMargin) {
+                pdf.addPage();
+                yPos = pageMargin; // Start bovenaan de nieuwe pagina
+            } else if (!firstPage && yPos !== pageMargin) {
+                yPos += 5; // Extra ruimte tussen blokken
             }
+
+            // Voeg de afbeelding toe aan de PDF
+            pdf.addImage(imgData, 'JPEG', pageMargin, yPos, pdfWidth, imgHeight);
+            yPos += imgHeight + 15; // Update yPos voor het volgende blok
+            firstPage = false;
         }
-      
+        
         // Save PDF
         pdf.save('analytics-report-optimized.pdf');
-      
+        
     } catch (err) {
         alert('Fout bij PDF export: ' + err.message);
         console.error(err);
